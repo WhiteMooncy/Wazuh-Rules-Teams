@@ -14,7 +14,7 @@
        Example format:
        https://[tenant].environment.api.powerplatform.com/workflows/[workflow-id]/triggers/manual/paths/invoke?api-version=1&sp=/triggers/manual/run&sv=1.0&sig=[signature]
   -->
-  <hook_url>https://defaultd3d20bb9a39441e287609164bed373.85.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5d3ba8433d6d44d389c3de80e4625757/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YOUR_SIGNATURE_HERE</hook_url>
+  <hook_url>https://YOUR-TENANT.environment.api.powerplatform.com/workflows/YOUR-WORKFLOW-ID/triggers/manual/paths/invoke?api-version=1&sp=/triggers/manual/run&sv=1.0&sig=YOUR-SIGNATURE-HERE</hook_url>
   
   <!-- Minimum alert level to process
        
