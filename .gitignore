@@ -1,0 +1,44 @@
+# Logs y archivos temporales
+*.log
+*.pkl
+*.pyc
+__pycache__/
+*.swp
+*.swo
+*~
+
+# Backups
+*.backup
+*.bak
+*.old
+backup-*/
+
+# Credenciales y configuración sensible
+*.env
+.env.local
+secrets.txt
+credentials.txt
+webhook_urls.txt
+
+# Archivos específicos de Wazuh
+teams_alerts_cache.pkl
+alerts.json
+
+# IDE y editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de testing locales
+test_output/
+*.test
+
+# Documentos temporales
+~$*.docx
+~$*.xlsx

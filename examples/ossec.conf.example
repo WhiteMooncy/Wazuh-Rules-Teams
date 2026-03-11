@@ -1,0 +1,163 @@
+# ossec.conf - Integration Configuration Example
+# 
+# Add this block to your /var/ossec/etc/ossec.conf file
+# Location: Anywhere before the closing </ossec_config> tag
+# Recommended: Near other <integration> blocks
+
+<integration>
+  <!-- Integration name must match the script filename -->
+  <name>custom-teams-summary</name>
+  
+  <!-- Power Automate webhook URL
+       Get this from: Power Automate > Your Flow > HTTP trigger "HTTP POST URL"
+       
+       Example format:
+       https://[tenant].environment.api.powerplatform.com/workflows/[workflow-id]/triggers/manual/paths/invoke?api-version=1&sp=/triggers/manual/run&sv=1.0&sig=[signature]
+  -->
+  <hook_url>YOUR-POWER-AUTOMATE-WEBHOOK-URL-HERE</hook_url>
+  
+  <!-- Minimum alert level to process
+       
+       Recommended values:
+       - level 11: High sensitivity (~40-50 alerts/day)  [DEFAULT]
+       - level 13: Medium sensitivity (~10-15 alerts/day)
+       - level 15: Critical only (~2-5 alerts/day)
+       
+       Note: Alerts with level >= this value will be processed.
+             Alerts below this level are ignored by integration.
+  -->
+  <level>11</level>
+  
+  <!-- Alert format - must be 'json' for this integration -->
+  <alert_format>json</alert_format>
+  
+  <!-- Additional options
+       verify_ssl: false - Disables SSL certificate verification
+                           (required for most Power Automate webhooks)
+  -->
+  <options>{"verify_ssl": false}</options>
+</integration>
+
+
+<!-- 
+     ALTERNATIVE CONFIGURATIONS 
+     
+     Uncomment one of these blocks instead of the above for different behavior:
+-->
+
+
+<!-- CONFIGURATION 1: High Sensitivity + Immediate Sending -->
+<!--
+<integration>
+  <name>custom-teams-summary</name>
+  <hook_url>YOUR_WEBHOOK_URL_HERE</hook_url>
+  <level>9</level>    <!-- Even lower threshold -->
+  <alert_format>json</alert_format>
+  <options>{"verify_ssl": false}</options>
+</integration>
+
+Note: With level 9, you'll get more alerts (80-120/day before accumulation).
+      Summary mode still active: will accumulate then send periodically.
+-->
+
+
+<!-- CONFIGURATION 2: Critical Only (No Accumulation Needed) -->
+<!--
+<integration>
+  <name>custom-teams-summary</name>
+  <hook_url>YOUR_WEBHOOK_URL_HERE</hook_url>
+  <level>15</level>   <!-- Critical alerts only -->
+  <alert_format>json</alert_format>
+  <options>{"verify_ssl": false}</options>
+</integration>
+
+Note: Level 15 alerts bypass accumulation and are sent immediately anyway.
+      This config produces ~2-5 alerts/day, all sent instantly.
+-->
+
+
+<!-- CONFIGURATION 3: Multiple Integrations (Separate Channels) -->
+<!--
+<integration>
+  <name>custom-teams-summary</name>
+  <hook_url>WEBHOOK_FOR_GENERAL_CHANNEL</hook_url>
+  <level>11</level>
+  <alert_format>json</alert_format>
+  <options>{"verify_ssl": false}</options>
+</integration>
+
+<integration>
+  <name>custom-teams-summary</name>
+  <hook_url>WEBHOOK_FOR_CRITICAL_CHANNEL</hook_url>
+  <level>15</level>  <!-- Only critical to this channel -->
+  <alert_format>json</alert_format>
+  <options>{"verify_ssl": false}</options>
+</integration>
+
+Note: Wazuh doesn't support rule-based routing in integration tags,
+      but you can use different level thresholds for different channels.
+-->
+
+
+<!-- CONFIGURATION 4: Specific Rule Groups -->
+<!--
+<integration>
+  <name>custom-teams-summary</name>
+  <hook_url>YOUR_WEBHOOK_URL_HERE</hook_url>
+  <level>11</level>
+  <alert_format>json</alert_format>
+  <rule_id>100001,100002,100036,100101</rule_id>  <!-- Only these rule IDs -->
+  <options>{"verify_ssl": false}</options>
+</integration>
+
+Note: rule_id filters specific rules to send.
+      Comma-separated list of rule IDs.
+-->
+
+
+<!--
+     HOW TO APPLY CHANGES:
+     
+     1. Edit this file:
+        sudo nano /var/ossec/etc/ossec.conf
+     
+     2. Add/modify the <integration> block
+     
+     3. Save and exit (Ctrl+X, Y, Enter)
+     
+     4. Validate configuration:
+        sudo /var/ossec/bin/wazuh-control info
+     
+     5. Restart Wazuh Manager:
+        sudo systemctl restart wazuh-manager
+     
+     6. Monitor for errors:
+        sudo tail -f /var/ossec/logs/ossec.log
+     
+     7. Test integration:
+        echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%S+0000)'","rule":{"level":12,"description":"Test","id":"100001"},"agent":{"name":"Test"}}' | \
+        sudo /var/ossec/integrations/custom-teams-summary.py "YOUR_WEBHOOK" 11 "custom-teams-summary"
+-->
+
+
+<!--
+     TROUBLESHOOTING:
+     
+     Issue: Integration not executing
+     - Check script exists: ls -lh /var/ossec/integrations/custom-teams-summary.py
+     - Verify permissions: sudo chmod 750 /var/ossec/integrations/custom-teams-summary.py
+     - Check logs: sudo tail -50 /var/ossec/logs/integrations.log
+     
+     Issue: HTTP 404 errors
+     - Webhook URL changed (Teams channel type modified)
+     - Regenerate webhook in Power Automate
+     - Update <hook_url> and restart wazuh-manager
+     
+     Issue: Too many alerts
+     - Increase <level> threshold (e.g., from 11 to 13)
+     - Adjust MAX_ALERTS_BEFORE_SUMMARY in custom-teams-summary.py
+     
+     Issue: Too few alerts
+     - Decrease <level> threshold (e.g., from 13 to 11)
+     - Verify rules are triggering: sudo tail -f /var/ossec/logs/alerts/alerts.json
+-->
