@@ -1,212 +1,236 @@
-# Wazuh Custom Rules
+# Wazuh Custom Rules - Factorized Architecture v2.0
 
-This directory contains the custom Wazuh rules for Windows Security event detection.
+Este directorio contiene las reglas custom de Wazuh organizadas en **3 archivos especializados** (98 reglas totales) para mejor mantenimiento, escalabilidad y separación de responsabilidades.
 
-## Files
+## 📁 Arquitectura de Archivos
 
-### custom_windows_security_rules.xml
-Contains 62 custom rules organized in the following categories:
+### 1️⃣ custom_windows_security_rules.xml
+**89 reglas** | **~44 KB** | **IDs: 100001-100089**
 
-- **Kerberos Authentication** (Rules 100001-100006): Detection of Kerberos attacks including Kerberoasting and ticket manipulation
-- **Service Installation** (Rules 100007-100008): Monitoring of new service installations
-- **Process Creation** (Rules 100009-100013): Critical process monitoring including Mimikatz and credential theft
-- **LSASS Events** (Rules 100014-100015): Detection of LSASS process access
-- **Account Management** (Rules 100016-100038): User account creation, modification, deletion, and privilege changes
-- **Password Changes** (Rules 100039-100042): Password policy changes and modifications
-- **Application Activity** (Rules 100043-100047): MS-Windows-SecurityAuditing event monitoring
-- **Security Event Log** (Rules 100048-100049): Event log clearing and tampering detection
-- **PAM** (Rule 100050): Pluggable Authentication Module events
-- **Audit Rules** (Rules 100051-100062): Additional Windows audit events
+**Propósito:** Eventos críticos de seguridad Windows no cubiertos por reglas base de Wazuh o que requieren ajuste de severidad.
 
-### local_rules_override.xml
-Contains 5 override rules that modify severity levels of existing Wazuh rules:
+**Dependencia:** `if_sid>60100` (Windows Security Base - Event Channel Security)
 
-- **Rule 60103**: Increased from level 0 to level 8 for generic Windows Security events
-- **Rules 100070-100072**: Password change variants (levels 0, 3, 3)
-- **Rule 100101**: Event log clearing raised to level 15 (critical)
-- **Rule 100103**: PAM authentication (level 3)
+**Categorías incluidas:**
+- **Kerberos Authentication** (6 reglas): TGT, Service Tickets, Kerberoasting, Golden Ticket
+- **Service Installation** (2 reglas): Servicios sospechosos, persistencia via servicios
+- **Process Execution** (5 reglas): CMD, PowerShell, WScript, RegEdit, Net commands
+- **Credential Access** (2 reglas): Acceso a LSASS, detección de Mimikatz
+- **Account Management** (15 reglas): Creación, modificación, eliminación de cuentas
+- **Password Operations** (4 reglas): Cambios de contraseña, resets, políticas
+- **Group Policy** (2 reglas): Modificaciones GPO, MSI Group Policy
+- **Security Auditing** (9 reglas): Cambios en políticas de auditoría del sistema
+- **Session Management** (4 reglas): Reconexiones RDP, desconexiones, sesiones idle
+- **Windows Firewall** (1 regla): Cambios en reglas de firewall
+- **Special Logon** (3 reglas): Asignación de privilegios especiales
+- **Object Access** (24 reglas): Acceso a archivos, registro, almacenamiento removible
+- **System Security** (4 reglas): Extensiones de seguridad, cambios de estado
+- **Other Security Events** (8 reglas): Manipulación de tokens, scheduled tasks
 
-## Rule Naming Convention
+**Event IDs cubiertos:** 4624, 4625, 4634, 4647, 4648, 4663, 4670, 4672, 4673, 4674, 4688, 4689, 4697, 4698, 4699, 4700, 4701, 4702, 4713, 4714, 4715, 4719, 4720, 4722, 4723, 4725, 4726, 4727, 4728, 4729, 4730, 4731, 4732, 4733, 4734, 4735, 4737, 4738, 4739, 4740, 4741, 4742, 4743, 4754, 4755, 4756, 4757, 4758, 4759, 4760, 4761, 4764, 4765, 4766, 4767, 4768, 4769, 4770, 4771, 4776, 4778, 4779, 4781, 4782, 4793, 4794, 4817, 5136, 5137, 5141, 7045
 
-- **100001-100062**: Custom Windows Security rules
-- **100070-100103**: Override rules (modifying existing Wazuh rule behavior)
+**MITRE ATT&CK:** T1003, T1003.001, T1055, T1070.001, T1078, T1098, T1136, T1543.003, T1548, T1558, T1558.003
 
-## Event ID Mapping
+---
 
-Each rule is mapped to specific Windows Event IDs:
+### 2️⃣ custom_windows_overrides.xml
+**5 reglas** | **~3.5 KB** | **IDs: 60103, 100101, 100110-100112**
 
-| Event ID | Description | Rule IDs |
-|----------|-------------|----------|
-| 4768 | Kerberos TGT Request | 100001-100003 |
-| 4770 | Kerberos Ticket Renewal | 100004-100005 |
-| 4679 | Kerberos Service Ticket | 100006 |
-| 4697 | Service Installed | 100007 |
-| 7045 | Service Installed (Alternative) | 100008 |
-| 4688 | Process Creation | 100009-100013 |
-| 4663 | Object Access (includes LSASS) | 100014-100015 |
-| 4720 | User Account Created | 100016 |
-| 4722 | User Account Enabled | 100017 |
-| 4723 | Change Password Attempt | 100018 |
-| 4724 | Reset Password Attempt | 100019 |
-| 4725 | User Account Disabled | 100020 |
-| 4726 | User Account Deleted | 100021 |
-| 4738 | User Account Changed | 100022 |
-| 4740 | User Account Locked | 100023 |
-| 4767 | User Account Unlocked | 100024 |
-| 4781 | Account Name Changed | 100025 |
-| 4732 | Member Added to Group | 100026 |
-| 4733 | Member Removed from Group | 100027 |
-| 4756 | Member Added to Universal Group | 100028 |
-| 4757 | Member Removed from Universal Group | 100029 |
-| 4735 | Group Changed | 100030 |
-| 4737 | Global Group Changed | 100031 |
-| 4727 | Global Security Group Created | 100032 |
-| 4754 | Universal Security Group Created | 100033 |
-| 4730 | Global Security Group Deleted | 100034 |
-| 4758 | Universal Security Group Deleted | 100035 |
-| 10 | Process Access (Mimikatz detection) | 100036 |
-| 4672 | Special Privileges Assigned | 100037 |
-| 4794 | DPAPI Restore Attempt | 100038 |
-| 4739 | Domain Policy Changed | 100039 |
-| 4713 | Kerberos Policy Changed | 100040 |
-| 4719 | System Audit Policy Changed | 100041 |
-| 4765 | SID History Added | 100042 |
+**Propósito:** Reglas de override que modifican comportamiento de reglas base de Wazuh y correlaciones avanzadas.
 
-## MITRE ATT&CK Mapping
+**Dependencia:** `if_sid>60100` (Windows Security Base)
 
-All rules include MITRE ATT&CK technique tags for threat intelligence integration:
+**Reglas incluidas:**
 
-- **T1558**: Steal or Forge Kerberos Tickets
-- **T1558.003**: Kerberoasting
-- **T1543.003**: Windows Service
-- **T1003**: OS Credential Dumping
-- **T1003.001**: LSASS Memory
-- **T1136**: Create Account
-- **T1098**: Account Manipulation
-- **T1078**: Valid Accounts
-- **T1070.001**: Clear Windows Event Logs
-- **T1055**: Process Injection
-- **T1548**: Abuse Elevation Control Mechanism
+| Rule ID | Event ID | Descripción | Level | Tipo |
+|---------|----------|-------------|-------|------|
+| 60103 | 4724 | Password Reset (Override) | 8 | Override |
+| 100101 | 1102, 517 | Security Log Clearing | **15** | Critical |
+| 100110 | Múltiples | Multiple Authentication Failures (5+ en 10 min) | 10 | Correlation |
+| 100111 | Múltiples | Successful Login After Failures | 12 | Correlation |
+| 100112 | Múltiples | Multiple Failed Logins from Single Source | 10 | Correlation |
 
-## Compliance Mapping
+**Notas importantes:**
+- ⚠️ **Rule 60103** sobrescribe la regla base de Wazuh para Event 4724 (cambio de nivel 0 → 8)
+- 🔥 **Rule 100101** es nivel 15 (**CRÍTICO**) - limpieza de logs de seguridad
+- 🔗 **Rules 110-112** son reglas de **correlación** basadas en múltiples eventos
 
-Rules are tagged with compliance frameworks:
+**MITRE ATT&CK:** T1070.001 (Indicator Removal: Clear Windows Event Logs)
 
-- **PCI DSS**: Payment Card Industry Data Security Standard
-- **GDPR**: General Data Protection Regulation
-- **HIPAA**: Health Insurance Portability and Accountability Act
-- **NIST 800-53**: Security and Privacy Controls
-- **TSC**: Trust Services Criteria
+---
 
-## Severity Levels
+### 3️⃣ custom_linux_security_rules.xml
+**4 reglas** | **~2.2 KB** | **IDs: 100103, 200001-200003**
 
-| Level | Description | Alert Threshold |
-|-------|-------------|-----------------|
-| 0-10 | Informational to Medium | Accumulated in summary |
-| 11-14 | High | Sent via summary (level 11 minimum) |
-| 15 | Critical | Sent immediately, bypasses accumulation |
+**Propósito:** Seguridad Linux/Unix, autenticación SSH y detección de cuentas no-nominales.
 
-## Installation
+**Dependencias:**
+- `if_sid>5501` (PAM authentication messages)
+- `if_sid>5502` (Linux user login)
+- CDB list: `/var/ossec/etc/lists/no-nominal-account.cdb`
 
-1. Copy both XML files to `/var/ossec/etc/rules/` on your Wazuh Manager:
+**Reglas incluidas:**
 
+| Rule ID | Descripción | Level | Detección |
+|---------|-------------|-------|-----------|
+| 100103 | PAM: Session opened for ROOT user | 8 | Autenticación root via PAM |
+| 200001 | Non-nominal account login detected | 10 | Login con cuenta genérica (SSH/local) |
+| 200002 | Sudo execution by non-nominal account | 12 | Uso de sudo con cuenta genérica |
+| 200003 | Non-nominal account authentication | 8 | Autenticación con cuenta compartida |
+
+**CDB List (no-nominal-account):**
+Cuentas genéricas/compartidas detectadas:
+- admin, test, administrator, root, service, backup, system, svc
+
+**Instalación de CDB list:**
 ```bash
-sudo cp custom_windows_security_rules.xml /var/ossec/etc/rules/
-sudo cp local_rules_override.xml /var/ossec/etc/rules/
+# Copiar archivo
+scp no-nominal-account root@wazuh:/var/ossec/etc/lists/
+
+# Compilar
+/var/ossec/bin/ossec-makelists
+
+# Verificar
+ls -lh /var/ossec/etc/lists/no-nominal-account.cdb
 ```
 
-2. Set proper ownership:
+---
+
+### 4️⃣ local_rules_override.xml
+**[DEPRECATED]** - Archivo antiguo de la estructura monolítica anterior. 
+
+**Status:** Mantenido por compatibilidad pero reemplazado por los 3 archivos factorizados.
+
+**Migración:** Ver `docs/CAMBIOS_FACTORIZACION_REGLAS.md` para detalles de la refactorización.
+
+---
+
+## 📊 Resumen Estadístico
+
+| Métrica | Valor |
+|---------|-------|
+| **Total Reglas** | **98** |
+| **Windows Security** | 89 |
+| **Windows Overrides** | 5 |
+| **Linux Security** | 4 |
+| **Event IDs únicos** | 73+ |
+| **MITRE Techniques** | 15+ |
+| **Rules Críticas (Level 15)** | 1 (Log Clearing) |
+| **CDB Lists** | 1 (no-nominal-account) |
+
+---
+
+## 🔧 Instalación
+
+### 1. Copiar archivos al servidor Wazuh
 
 ```bash
-sudo chown root:wazuh /var/ossec/etc/rules/custom_windows_security_rules.xml
-sudo chown root:wazuh /var/ossec/etc/rules/local_rules_override.xml
-sudo chmod 640 /var/ossec/etc/rules/*.xml
+ssh root@wazuh-server
+
+# Copiar reglas
+cd /var/ossec/etc/rules/
+# Usar scp, wget o copiar manualmente los 3 archivos XML
+
+# Copiar CDB list
+cd /var/ossec/etc/lists/
+# Copiar no-nominal-account
+
+# Compilar CDB
+/var/ossec/bin/ossec-makelists
 ```
 
-3. Test rule syntax:
+### 2. Configurar ossec.conf
 
-```bash
-sudo /var/ossec/bin/wazuh-logtest
-```
-
-4. Restart Wazuh Manager:
-
-```bash
-sudo systemctl restart wazuh-manager
-```
-
-## Validation
-
-Verify rules are loaded:
-
-```bash
-sudo grep -r "rule id=\"100" /var/ossec/etc/rules/
-```
-
-Check for syntax errors:
-
-```bash
-sudo tail -f /var/ossec/logs/ossec.log | grep -i error
-```
-
-## Customization
-
-### Adjusting Severity Levels
-
-Edit the `level` attribute in each `<rule>` tag:
+Agregar dentro de `<ossec_config>`:
 
 ```xml
-<rule id="100001" level="3">  <!-- Change this number -->
+<ruleset>
+  <!-- Custom Windows Security Rules (89 rules) -->
+  <rule_files>custom_windows_security_rules.xml</rule_files>
+  
+  <!-- Custom Windows Overrides (5 rules) -->
+  <rule_files>custom_windows_overrides.xml</rule_files>
+  
+  <!-- Custom Linux Security Rules (4 rules) -->
+  <rule_files>custom_linux_security_rules.xml</rule_files>
+  
+  <!-- CDB List for non-nominal accounts -->
+  <list>etc/lists/no-nominal-account</list>
+</ruleset>
 ```
 
-### Disabling Specific Rules
+### 3. Validar y reiniciar
 
-Comment out unwanted rules:
+```bash
+# Verificar sintaxis XML
+/var/ossec/bin/wazuh-logtest -t
 
-```xml
-<!-- <rule id="100001" level="3">
-  ...
-</rule> -->
+# Reiniciar Wazuh Manager
+systemctl restart wazuh-manager
+
+# Verificar reglas cargadas
+grep "Total rules enabled" /var/ossec/logs/ossec.log | tail -1
 ```
 
-### Adding Custom Fields
+---
 
-Extend rules with additional field matching:
+## 🧪 Testing
 
-```xml
-<rule id="100001" level="3">
-  <if_sid>60103</if_sid>
-  <field name="win.system.eventID">^4768$</field>
-  <field name="win.eventdata.targetUserName">admin</field>  <!-- New condition -->
-  <description>...</description>
-</rule>
+### Test individual de reglas
+
+```bash
+# Test Event 4624 (Logon)
+echo '<Event><System><EventID>4624</EventID></System></Event>' | /var/ossec/bin/wazuh-logtest
+
+# Test Event 1102 (Log Clearing - CRÍTICO)
+echo '<Event><System><EventID>1102</EventID></System></Event>' | /var/ossec/bin/wazuh-logtest
 ```
 
-## Troubleshooting
+### Test suite completo
 
-### Rules Not Triggering
+Script de testing disponible en: `/scripts/test_all_rules.sh`
 
-1. **Check rule is loaded:**
-   ```bash
-   sudo /var/ossec/bin/wazuh-control info | grep rules
-   ```
+---
 
-2. **Verify parent rule exists:**
-   All custom rules depend on rule `60103` (Windows Security base rule)
+## 📋 Convenciones de Nombres
 
-3. **Test with sample alert:**
-   ```bash
-   echo '{"win":{"system":{"eventID":"4768"}}}' | sudo /var/ossec/bin/wazuh-logtest
-   ```
+| Rango IDs | Propósito | Archivo |
+|-----------|-----------|---------|
+| 100001-100089 | Windows Security Events | custom_windows_security_rules.xml |
+| 60103, 100101 | Windows Overrides (críticos) | custom_windows_overrides.xml |
+| 100110-100112 | Windows Correlations | custom_windows_overrides.xml |
+| 100103 | Linux PAM root auth | custom_linux_security_rules.xml |
+| 200001-200003 | Linux non-nominal accounts | custom_linux_security_rules.xml |
 
-### High False Positive Rate
+**Nota:** IDs 100090-100091 fueron eliminados (duplicados Event 4724, ya cubierto por rule 60103)
 
-- **Adjust frequency/timeframe:** Modify correlation rules (e.g., rule 100002)
-- **Add exclusions:** Use `<match>` with negation patterns
-- **Increase level threshold:** Raise level in ossec.conf integration
+---
 
-## References
+## 🔗 Referencias
 
-- [Wazuh Rule Syntax Documentation](https://documentation.wazuh.com/current/user-manual/ruleset/ruleset-xml-syntax/index.html)
-- [Windows Security Event IDs](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/appendix-l--events-to-monitor)
-- [MITRE ATT&CK Framework](https://attack.mitre.org/)
+- **Documentación completa:** `docs/CAMBIOS_FACTORIZACION_REGLAS.md`
+- **Reporte de tests:** `docs/TEST_REPORT.md`
+- **Instalación:** `docs/INSTALLATION.md`
+- **Migración:** `docs/MIGRATION.md`
+- **CDB Lists:** `lists/README.md`
+
+---
+
+## ⚠️ Notas Importantes
+
+1. **Orden de carga:** Los archivos se cargan en el orden definido en `ossec.conf`. Es importante cargar `custom_windows_overrides.xml` después de `custom_windows_security_rules.xml`.
+
+2. **Rule 60103:** Esta regla sobrescribe comportamiento base de Wazuh. Si se elimina, Event 4724 volverá a nivel 0.
+
+3. **CDB Lists:** Sin la lista compilada, las reglas 200001-200003 **no funcionarán**. Verificar con `ls /var/ossec/etc/lists/*.cdb`.
+
+4. **Dependencies:** Todas las reglas Windows dependen de `rule 60100` (Windows Security Base). Si esta regla no existe, las custom rules no se dispararán.
+
+5. **Testing:** Después de cualquier cambio, ejecutar `wazuh-logtest -t` para verificar sintaxis XML antes de reiniciar el servicio.
+
+---
+
+**Versión:** 2.0 (Factorizada)  
+**Última actualización:** 2026-03-12  
+**Autor:** SOC Team  
+**Wazuh Compatible:** 4.x+

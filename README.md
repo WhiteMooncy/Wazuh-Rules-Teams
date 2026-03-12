@@ -9,7 +9,11 @@
 ## 📋 Descripción
 
 Este proyecto proporciona una implementación completa de:
-- **67 reglas custom** para Windows Security Events (Kerberos, Process Execution, Account Management, LSASS, etc.)
+- **98 reglas custom** factorizadas en 3 archivos especializados:
+  - **Windows Security** (89 reglas): Eventos críticos de seguridad Windows
+  - **Windows Overrides** (5 reglas): Ajustes de severidad y correlaciones
+  - **Linux Security** (4 reglas): Autenticación SSH y cuentas no-nominales
+- **CDB Lists**: Sistema de listas para detección de cuentas genéricas
 - **Integración inteligente con Microsoft Teams** usando Power Automate
 - **Sistema de resúmenes acumulativos** (envío cada 3 alertas o 24 horas)
 - **Alertas críticas inmediatas** (nivel ≥15)
@@ -17,16 +21,58 @@ Este proyecto proporciona una implementación completa de:
 
 ## 🎯 Características Principales
 
-### ✅ Reglas Custom (67 totales)
+### ✅ Arquitectura Factorizada v2.0
 
-- **Kerberos Authentication** (6 reglas): Detección de TGT, Service Tickets, ataques Kerberoasting
-- **Service Installation** (2 reglas): Detección de servicios sospechosos y persistencia
+Las reglas están organizadas en **3 archivos especializados** para mejor mantenimiento:
+
+#### 1️⃣ custom_windows_security_rules.xml (89 reglas)
+**Propósito:** Eventos críticos de seguridad Windows no cubiertos por reglas base
+
+**Categorías:**
+
+**Categorías:**
+- **Kerberos Authentication** (6 reglas): TGT, Service Tickets, Kerberoasting
+- **Service Installation** (2 reglas): Servicios sospechosos, persistencia
 - **Process Execution** (5 reglas): CMD, PowerShell, WScript, RegEdit, Net.exe
-- **Credential Access** (2 reglas): Acceso a LSASS, Mimikatz
+- **Credential Access** (2 reglas): LSASS, Mimikatz
 - **Account Management** (15 reglas): Creación, modificación, grupos privilegiados
-- **Password Operations** (4 reglas): Cambios de contraseña, resets
-- **Defense Evasion** (1 regla): Limpieza de logs (CRÍTICO)
-- **Linux PAM** (1 regla): Autenticación root
+- **Password Operations** (4 reglas): Cambios y resets de contraseñas
+- **Group Policy** (2 reglas): GPO modifications, MSI installs
+- **Security Auditing** (9 reglas): Cambios en políticas de auditoría
+- **Session Management** (4 reglas): Reconexiones, desconexiones, idle
+- **Windows Firewall** (1 regla): Cambios en reglas de firewall
+- **Special Logon** (3 reglas): Special privileges assigned
+- **Object Access** (24 reglas): File access, registry, removable storage
+- **System Security** (4 reglas): Security system extension, state changes
+- **Other Security Events** (8 reglas): Token manipulation, filtering, scheduled tasks
+
+**IDs:** 100001-100089 | **Base:** if_sid>60100 (Windows Base)
+
+#### 2️⃣ custom_windows_overrides.xml (5 reglas)
+**Propósito:** Ajustes de severidad y correlaciones avanzadas
+
+- **60103**: Override Event 4724 (Password Reset) - Level 4 → 8
+- **100101**: Security Log Clearing (**CRÍTICO** - Level 15)
+- **100110-100112**: Correlaciones múltiples fallos de autenticación
+
+**Base:** if_sid>60100 | **Nota:** Este archivo incluye reglas que sobrescriben comportamiento base de Wazuh
+
+#### 3️⃣ custom_linux_security_rules.xml (4 reglas)
+**Propósito:** Seguridad Linux/Unix y SSH
+
+- **100103**: PAM root authentication (Level 8)
+- **200001-200003**: Non-nominal account detection (admin, test, service, etc.)
+  - Usa CDB list `/var/ossec/etc/lists/no-nominal-account`
+  - Level 10 (Login) y Level 12 (Sudo execution)
+
+**IDs:** 100103, 200001-200003 | **Requisito:** CDB list compilada
+
+### ✅ CDB Lists System
+
+**Archivo:** `no-nominal-account` (8 cuentas genéricas)
+- admin, test, administrator, root, service, backup, system, svc
+- **Formato:** key:value (compilado a .cdb)
+- **Uso:** Detección de inicios de sesión con cuentas compartidas
 
 ### ✅ Integración Teams
 
@@ -54,18 +100,29 @@ Este proyecto proporciona una implementación completa de:
 - Cuenta de Microsoft Teams
 - Power Automate (incluido en Microsoft 365)
 
-### Paso 1: Copiar Reglas
+### Paso 1: Copiar Reglas y CDB Lists
 
 ```bash
 # Conectar al servidor Wazuh
 ssh root@<WAZUH-SERVER-IP>
 
-# Copiar reglas custom
+# Copiar los 3 archivos de reglas custom
 cd /var/ossec/etc/rules/
 wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/rules/custom_windows_security_rules.xml
-wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/rules/local_rules_override.xml
+wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/rules/custom_windows_overrides.xml
+wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/rules/custom_linux_security_rules.xml
 
-# Verificar sintaxis
+# Copiar CDB list
+cd /var/ossec/etc/lists/
+wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/lists/no-nominal-account
+
+# Compilar CDB list
+/var/ossec/bin/ossec-makelists
+
+# Verificar compilación
+ls -lh /var/ossec/etc/lists/no-nominal-account.cdb
+
+# Verificar sintaxis XML
 /var/ossec/bin/wazuh-logtest -t
 ```
 
@@ -96,7 +153,29 @@ chown root:wazuh custom-teams-summary.py custom-teams-summary
 # Editar ossec.conf
 nano /var/ossec/etc/ossec.conf
 
-# Agregar al final (antes de </ossec_config>):
+# Agregar configuración de ruleset (después de otras reglas):
+```
+
+```xml
+<ossec_config>
+  <ruleset>
+    <!-- Custom Windows Security Rules (89 rules) -->
+    <rule_files>custom_windows_security_rules.xml</rule_files>
+    
+    <!-- Custom Windows Overrides (5 rules) -->
+    <rule_files>custom_windows_overrides.xml</rule_files>
+    
+    <!-- Custom Linux Security Rules (4 rules) -->
+    <rule_files>custom_linux_security_rules.xml</rule_files>
+    
+    <!-- CDB List for non-nominal accounts -->
+    <list>etc/lists/no-nominal-account</list>
+  </ruleset>
+</ossec_config>
+```
+
+```bash
+# (OPCIONAL) Agregar integración Teams al final (antes de </ossec_config>):
 ```
 
 ```xml
@@ -105,6 +184,7 @@ nano /var/ossec/etc/ossec.conf
   <hook_url>TU-WEBHOOK-URL-AQUI</hook_url>
   <level>11</level>
   <alert_format>json</alert_format>
+  <options>{"verify_ssl": false}</options>
 </integration>
 ```
 
@@ -112,8 +192,9 @@ nano /var/ossec/etc/ossec.conf
 # Reiniciar Wazuh
 systemctl restart wazuh-manager
 
-# Verificar estado
+# Verificar estado y reglas cargadas
 systemctl status wazuh-manager
+grep "Total rules enabled" /var/ossec/logs/ossec.log | tail -1
 ```
 
 ### Paso 5: Probar
@@ -132,14 +213,21 @@ chmod +x test_alerts.sh
 
 ```
 wazuh-custom-rules-teams/
-├── README.md                          # Este archivo
-├── LICENSE                            # Licencia MIT
-├── .gitignore                         # Archivos excluidos
+├── README.md                                # Documentación principal
+├── CHANGELOG.md                             # Historial de cambios
+├── LICENSE                                  # Licencia MIT
+├── .gitignore                               # Archivos excluidos
 │
-├── rules/                             # Reglas de detección
-│   ├── custom_windows_security_rules.xml    # 62 reglas custom
-│   ├── local_rules_override.xml             # 5 reglas override
+├── rules/                                   # Reglas de detección (98 reglas)
+│   ├── custom_windows_security_rules.xml   # 89 reglas Windows Security
+│   ├── custom_windows_overrides.xml        # 5 reglas overrides y correlaciones
+│   ├── custom_linux_security_rules.xml     # 4 reglas Linux/SSH
+│   ├── local_rules_override.xml            # [DEPRECATED] Versión anterior
 │   └── README.md                            # Documentación de reglas
+│
+├── lists/                                   # CDB Lists
+│   ├── no-nominal-account                   # Lista de cuentas genéricas
+│   └── README.md                            # Instrucciones de instalación
 │
 ├── integrations/                      # Scripts de integración
 │   ├── custom-teams-summary.py              # Script principal Python

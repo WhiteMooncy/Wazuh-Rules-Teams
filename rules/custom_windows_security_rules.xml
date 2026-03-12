@@ -1,22 +1,54 @@
 <!--
   -  Custom Windows Security Rules para Wazuh
   -  Autor: SOC
-  -  Fecha: 2026-03-11
+  -  Fecha: 2026-03-11 (Actualizado)
+  -  Versión: 2.0
   -  
   -  Descripción: Reglas custom para eventos críticos de Windows Security
   -  que no están cubiertos en las reglas base de Wazuh o necesitan
   -  ajuste de nivel de severidad.
   -  
   -  CATEGORÍAS INCLUIDAS:
-  -  - Kerberos Authentication (ALTA PRIORIDAD)
-  -  - Service Installation (ALTA PRIORIDAD)
-  -  - Process Creation (ALTA PRIORIDAD)
-  -  - AD Federation Services (MEDIA PRIORIDAD)
-  -  - Scheduled Tasks (MEDIA PRIORIDAD)
-  -  - Policy Changes (MEDIA PRIORIDAD)
-  -  - Privilege Use (MEDIA PRIORIDAD)
-  -  - LSASS Events (MEDIA PRIORIDAD)
-  -  - Object Access (MEDIA PRIORIDAD)
+  -  ✓ Account Logon (CRÍTICA) - 4776 NTLM Authentication
+  -  ✓ Kerberos Authentication (ALTA PRIORIDAD) - 4768, 4770, 4679
+  -  ✓ Service Installation (ALTA PRIORIDAD) - 4697
+  -  ✓ Process Creation (ALTA PRIORIDAD) - 4688, 4689, 4690-4696
+  -  ✓ Explicit Credentials (ALTA PRIORIDAD) - 4648
+  -  ✓ Object Access (ALTA PRIORIDAD) - 4661, 4662, 4663, 4671, 4691
+  -  ✓ Scheduled Tasks (MEDIA PRIORIDAD) - 4699-4702
+  -  ✓ Policy Changes (MEDIA PRIORIDAD) - 4670, 4703, 4706, 4707, 4713, 4716-4718, 4739, 4864-4867
+  -  ✓ Privilege Use (MEDIA PRIORIDAD) - 4674, 4985
+  -  ✓ LSASS Events (MEDIA PRIORIDAD) - 3033, 3063
+  -  ✓ System Integrity (ALTA PRIORIDAD) - 4618, 5038, 5056, 5061, 5281, 6410
+  -  ✓ AD Federation Services (MEDIA PRIORIDAD) - 39, 40, 41, 70, 307, 1200, 1202
+  -  ✓ LDAP Security (MEDIA PRIORIDAD) - 2889
+  -  ✓ Account Management (MEDIA PRIORIDAD) - 4723, 4765, 4766, 4780, 4794, 5376, 5377
+  -  ✓ Certificate Services (MEDIA PRIORIDAD) - 4821, 4822, 4824, 4876, 4886, 4887, 4899, 4900, 5124, 8222
+  -  ✓ Windows Filtering Platform (MEDIA PRIORIDAD) - 5148, 5149
+  -  ✓ COM+ Catalog (BAJA PRIORIDAD) - 5888-5890
+  -  ✓ Active Directory Replication (MEDIA PRIORIDAD) - 4928, 4929
+  -  ✓ Directory Services Access (MEDIA PRIORIDAD) - 5138, 5139
+  -  ✓ Special Logon (MEDIA PRIORIDAD) - 4627, 4964
+  -  ✓ IPsec Driver (BAJA PRIORIDAD) - 5478, 5479
+  -  ✓ Data Protection (ALTA PRIORIDAD) - 4695
+  -  
+  -  NOTA: Event 4724 (Password Reset) está cubierto en local_rules_override.xml
+  -  
+  -  Total reglas: 89 (IDs 100001-100089, excluyendo 100090-100091)
+  -  
+  -  MITRE ATT&CK Coverage:
+  -  - T1003.001/002 (Credential Dumping)
+  -  - T1558 (Kerberos Attacks)
+  -  - T1550.002 (Pass the Hash)
+  -  - T1110 (Brute Force)
+  -  - T1078 (Valid Accounts)
+  -  - T1543.003 (Windows Service)
+  -  - T1053.005 (Scheduled Tasks)
+  -  - T1484 (Domain Policy Modification)
+  -  - T1222 (File Permissions Modification)
+  -  - T1134 (Access Token Manipulation)
+  -  - T1098 (Account Manipulation)
+  -  - Y muchos más...
   -->
 
 <group name="windows,sysmon,">
@@ -26,7 +58,7 @@
   
   <!-- Event 4768: Kerberos TGT Request -->
   <rule id="100001" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4768$</field>
     <description>Windows: Solicitud de servicio de autenticación Kerberos (TGT) | Kerberos Authentication Service (TGT) requested</description>
     <mitre>
@@ -46,7 +78,7 @@
   </rule>
 
   <rule id="100003" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4768$</field>
     <field name="win.eventdata.status">0x12</field>
     <description>Windows: Solicitud TGT Kerberos fallida - Cuenta deshabilitada o expirada | Kerberos TGT request failed - Account disabled or expired</description>
@@ -58,7 +90,7 @@
 
   <!-- Event 4770: Kerberos Ticket Renewal -->
   <rule id="100004" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4770$</field>
     <description>Windows: Ticket de servicio Kerberos renovado | Kerberos service ticket renewed</description>
     <mitre>
@@ -68,7 +100,7 @@
   </rule>
 
   <rule id="100005" level="8">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4770$</field>
     <field name="win.eventdata.status">0x1F</field>
     <description>Windows: Renovación de ticket Kerberos fallida - Falló verificación de integridad | Kerberos ticket renewal failed - Integrity check failed</description>
@@ -80,7 +112,7 @@
 
   <!-- Event 4679: Kerberos Service Ticket -->
   <rule id="100006" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4679$</field>
     <description>Windows: Operaciones de ticket de servicio Kerberos | Kerberos service ticket operations</description>
     <mitre>
@@ -93,7 +125,7 @@
   
   <!-- Event 4697: Service Installed -->
   <rule id="100007" level="8">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4697$</field>
     <description>Windows: Un servicio fue instalado en el sistema | A service was installed in the system</description>
     <mitre>
@@ -117,7 +149,7 @@
   
   <!-- Event 4648: Logon using explicit credentials -->
   <rule id="100009" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4648$</field>
     <description>Windows: Intento de inicio de sesión usando credenciales explícitas | A logon was attempted using explicit credentials</description>
     <mitre>
@@ -142,7 +174,7 @@
   
   <!-- Event 4688: New Process Created -->
   <rule id="100011" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4688$</field>
     <description>Windows: Un nuevo proceso ha sido creado | A new process has been created</description>
     <mitre>
@@ -177,7 +209,7 @@
 
   <!-- Event 4689: Process Terminated -->
   <rule id="100014" level="2">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4689$</field>
     <description>Windows: Un proceso ha finalizado | A process has exited</description>
     <group>process_termination,</group>
@@ -185,7 +217,7 @@
 
   <!-- Event 4690-4696: Token Manipulation -->
   <rule id="100015" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^469[0-6]$</field>
     <description>Windows: Manipulación de Token/Handle detectada | Token/Handle manipulation detected</description>
     <mitre>
@@ -198,7 +230,7 @@
   
   <!-- Event 4663: Object Access Attempt -->
   <rule id="100016" level="2">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4663$</field>
     <description>Windows: Se intentó acceder a un objeto | An attempt was made to access an object</description>
     <group>object_access,pci_dss_10.2.5,gdpr_IV_32.2,</group>
@@ -219,7 +251,7 @@
 
   <!-- Event 4699: Scheduled Task Deleted -->
   <rule id="100018" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4699$</field>
     <description>Windows: Una tarea programada fue eliminada | A scheduled task was deleted</description>
     <mitre>
@@ -230,7 +262,7 @@
 
   <!-- Event 4700: Scheduled Task Enabled -->
   <rule id="100019" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4700$</field>
     <description>Windows: Una tarea programada fue habilitada | A scheduled task was enabled</description>
     <mitre>
@@ -241,7 +273,7 @@
 
   <!-- Event 4701: Scheduled Task Disabled -->
   <rule id="100020" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4701$</field>
     <description>Windows: Una tarea programada fue deshabilitada | A scheduled task was disabled</description>
     <mitre>
@@ -253,7 +285,7 @@
 
   <!-- Event 4702: Scheduled Task Updated -->
   <rule id="100021" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4702$</field>
     <description>Windows: Una tarea programada fue actualizada | A scheduled task was updated</description>
     <mitre>
@@ -266,7 +298,7 @@
 
   <!-- Event 4670: Permissions Changed -->
   <rule id="100022" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4670$</field>
     <description>Windows: Permisos en un objeto fueron modificados | Permissions on an object were changed</description>
     <mitre>
@@ -277,7 +309,7 @@
 
   <!-- Event 4706: Domain Trust Created -->
   <rule id="100023" level="9">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4706$</field>
     <description>Windows: Se creó una nueva confianza a un dominio | A new trust was created to a domain</description>
     <mitre>
@@ -288,7 +320,7 @@
 
   <!-- Event 4707: Domain Trust Removed -->
   <rule id="100024" level="9">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4707$</field>
     <description>Windows: Se eliminó una confianza a un dominio | A trust to a domain was removed</description>
     <mitre>
@@ -299,7 +331,7 @@
 
   <!-- Event 4713: Kerberos Policy Changed -->
   <rule id="100025" level="8">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4713$</field>
     <description>Windows: Política Kerberos fue modificada | Kerberos policy was changed</description>
     <mitre>
@@ -310,7 +342,7 @@
 
   <!-- Event 4716: Trusted Domain Information Modified -->
   <rule id="100026" level="9">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4716$</field>
     <description>Windows: Información de dominio de confianza fue modificada | Trusted domain information was modified</description>
     <mitre>
@@ -321,7 +353,7 @@
 
   <!-- Event 4717: System Security Access Granted -->
   <rule id="100027" level="7">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4717$</field>
     <description>Windows: Acceso de seguridad del sistema fue otorgado a una cuenta | System security access was granted to an account</description>
     <mitre>
@@ -332,7 +364,7 @@
 
   <!-- Event 4718: System Security Access Removed -->
   <rule id="100028" level="7">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4718$</field>
     <description>Windows: Acceso de seguridad del sistema fue removido de una cuenta | System security access was removed from an account</description>
     <mitre>
@@ -343,7 +375,7 @@
 
   <!-- Event 4739: Domain Policy Changed -->
   <rule id="100029" level="8">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4739$</field>
     <description>Windows: Política de dominio fue modificada | Domain Policy was changed</description>
     <mitre>
@@ -354,7 +386,7 @@
 
   <!-- Event 4703: User Right Adjusted -->
   <rule id="100030" level="7">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4703$</field>
     <description>Windows: Un derecho de token fue ajustado | A token right was adjusted</description>
     <mitre>
@@ -365,7 +397,7 @@
 
   <!-- Events 4864-4867: Namespace Collision -->
   <rule id="100031" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^486[4-7]$</field>
     <description>Windows: Colisión de espacio de nombres detectada | Namespace collision detected</description>
     <group>policy_changed,pci_dss_10.6.1,gdpr_IV_35.7.d,nist_800_53_AU.6,</group>
@@ -375,7 +407,7 @@
 
   <!-- Event 4674: Privileged Operation Attempted -->
   <rule id="100032" level="4">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4674$</field>
     <description>Windows: Se intentó una operación en un objeto privilegiado | An operation was attempted on a privileged object</description>
     <mitre>
@@ -397,7 +429,7 @@
 
   <!-- Event 4985: Transaction State Changed -->
   <rule id="100034" level="4">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4985$</field>
     <description>Windows: El estado de una transacción ha cambiado | The state of a transaction has changed</description>
     <group>system_event,</group>
@@ -407,7 +439,7 @@
  
   <!-- Event 3033: LSASS Driver Loaded -->
   <rule id="100035" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^3033$</field>
     <description>Windows: LSASS - Integridad de código determinó que el controlador no está firmado | LSASS - Code integrity determined driver is not signed</description>
     <mitre>
@@ -419,7 +451,7 @@
 
   <!-- Event 3063: LSASS Unauthorized Access -->
   <rule id="100036" level="10">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^3063$</field>
     <description>Windows: LSASS - Acceso no autorizado bloqueado | LSASS - Unauthorized access blocked</description>
     <mitre>
@@ -430,7 +462,7 @@
 
   <!-- Event 4618: Monitored Security Event Pattern -->
   <rule id="100037" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4618$</field>
     <description>Windows: Ocurrió un patrón de evento de seguridad monitoreado | A monitored security event pattern has occurred</description>
     <group>system_integrity,pci_dss_10.6.1,gdpr_IV_35.7.d,nist_800_53_AU.6,</group>
@@ -438,7 +470,7 @@
 
   <!-- Event 5038: Code Integrity Check Failed -->
   <rule id="100038" level="8">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^5038$</field>
     <description>Windows: Integridad de código determinó que el hash de imagen no es válido | Code integrity determined image hash is not valid</description>
     <mitre>
@@ -450,7 +482,7 @@
 
   <!-- Event 5056: Crypto Self Test -->
   <rule id="100039" level="4">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^5056$</field>
     <description>Windows: Se realizó una autoprueba criptográfica | A cryptographic self test was performed</description>
     <group>system_integrity,pci_dss_10.6.1,nist_800_53_AU.6,</group>
@@ -458,7 +490,7 @@
 
   <!-- Event 5061: Crypto Operation -->
   <rule id="100040" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^5061$</field>
     <description>Windows: Operación criptográfica | Cryptographic operation</description>
     <group>system_integrity,pci_dss_10.6.1,</group>
@@ -466,7 +498,7 @@
 
   <!-- Event 5281: Code Integrity Failed -->
   <rule id="100041" level="9">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^5281$</field>
     <description>Windows: Verificación de integridad de código falló - Controlador no confiable cargado | Code Integrity check failed - Untrusted driver loaded</description>
     <mitre>
@@ -478,7 +510,7 @@
 
   <!-- Event 6410: BCD Modification -->
   <rule id="100042" level="8">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^6410$</field>
     <description>Windows: Datos de configuración de arranque (BCD) fueron modificados | Boot Configuration Data (BCD) was modified</description>
     <mitre>
@@ -491,7 +523,7 @@
  
   <!-- Event 307: AD FS Configuration Change -->
   <rule id="100043" level="8">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^307$</field>
     <description>Windows: Configuración de AD FS fue modificada | AD FS configuration was changed</description>
     <mitre>
@@ -502,7 +534,7 @@
 
   <!-- Event 1200: AD FS Token Issued -->
   <rule id="100044" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^1200$</field>
     <description>Windows: AD FS emitió exitosamente un token válido | AD FS successfully issued a valid token</description>
     <mitre>
@@ -523,7 +555,7 @@
 
   <!-- Event 1202: AD FS Credential Validation -->
   <rule id="100046" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^1202$</field>
     <description>Windows: AD FS validó una nueva credencial | AD FS validated a new credential</description>
     <mitre>
@@ -536,7 +568,7 @@
  
   <!-- Event 2889: LDAP Insecure Binding -->
   <rule id="100047" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^2889$</field>
     <description>Windows: Cliente realizó enlace LDAP sin SSL/TLS | The following client performed LDAP bind without SSL/TLS</description>
     <mitre>
@@ -549,7 +581,7 @@
  
   <!-- Event 4671: Certificate Services -->
   <rule id="100048" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4671$</field>
     <description>Windows: Aplicación intentó acceder a un ordinal bloqueado a través del TBS | Application attempted to access a blocked ordinal through the TBS</description>
     <group>object_access,pci_dss_10.2.5,gdpr_IV_35.7.d,</group>
@@ -557,7 +589,7 @@
 
   <!-- Event 4691: Indirect Access to Object -->
   <rule id="100049" level="4">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4691$</field>
     <description>Windows: Se solicitó acceso indirecto a un objeto | Indirect access to an object was requested</description>
     <group>object_access,pci_dss_10.2.5,</group>
@@ -565,7 +597,7 @@
 
   <!-- Events 5148-5149: Windows Filtering Platform -->
   <rule id="100050" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^514[8-9]$</field>
     <description>Windows: Plataforma de Filtrado de Windows detectó ataque DoS | Windows Filtering Platform detected DoS attack</description>
     <mitre>
@@ -576,7 +608,7 @@
 
   <!-- Events 5888-5890: COM+ Catalog -->
   <rule id="100051" level="4">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^588[8-9]$|^5890$</field>
     <description>Windows: Modificación del catálogo COM+ detectada | COM+ catalog modification detected</description>
     <mitre>
@@ -589,7 +621,7 @@
  
   <!-- Event 4765: Distribution Group Created/Changed -->
   <rule id="100052" level="4">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4765$</field>
     <description>Windows: Historial SID fue agregado a una cuenta | SID History was added to an account</description>
     <mitre>
@@ -600,7 +632,7 @@
 
   <!-- Event 4766: Distribution Group Member -->
   <rule id="100053" level="6">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4766$</field>
     <description>Windows: Falló un intento de agregar Historial SID a una cuenta | An attempt to add SID History to an account failed</description>
     <mitre>
@@ -613,7 +645,7 @@
  
   <!-- Event 4780: ACL Set on Admin Accounts -->
   <rule id="100054" level="7">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4780$</field>
     <description>Windows: Se estableció la ACL en cuentas que son miembros de grupos de administradores | The ACL was set on accounts which are members of administrators groups</description>
     <mitre>
@@ -624,7 +656,7 @@
 
   <!-- Event 4794: Directory Services Restore Mode Password Set -->
   <rule id="100055" level="9">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4794$</field>
     <description>Windows: Se intentó establecer contraseña de modo de restauración de servicios de directorio | An attempt was made to set Directory Services Restore Mode password</description>
     <mitre>
@@ -637,7 +669,7 @@
  
   <!-- Event 4821: Certificate Enrollment -->
   <rule id="100056" level="4">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4821$</field>
     <description>Windows: Servicios de certificados recibió una solicitud de certificado | Certificate Services received a certificate request</description>
     <group>pki,pci_dss_10.2.5,gdpr_IV_32.2,</group>
@@ -645,7 +677,7 @@
 
   <!-- Event 4822: Certificate Services -->
   <rule id="100057" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4822$</field>
     <description>Windows: Servicios de certificados cargó una plantilla | Certificate Services loaded a template</description>
     <group>pki,pci_dss_10.2.5,gdpr_IV_32.2,</group>
@@ -653,7 +685,7 @@
 
   <!-- Event 4824: Certificate Approval -->
   <rule id="100058" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4824$</field>
     <description>Windows: Servicios de certificados aprobó una solicitud de certificado y emitió un certificado | Certificate Services approved a certificate request and issued a certificate</description>
     <group>pki,pci_dss_10.2.5,gdpr_IV_32.2,</group>
@@ -661,7 +693,7 @@
 
   <!-- Event 5124: OCSP Responder -->
   <rule id="100059" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^5124$</field>
     <description>Windows: Se actualizó una configuración en el servicio OCSP Responder | A configuration setting was updated on the OCSP Responder Service</description>
     <group>pki,pci_dss_10.2.5,gdpr_IV_32.2,</group>
@@ -671,7 +703,7 @@
  
   <!-- Event 4627: Group Membership Enumeration -->
   <rule id="100060" level="3">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4627$</field>
     <description>Windows: Información de membresía de grupo | Group membership information</description>
     <group>authentication_success,pci_dss_10.2.5,</group>
@@ -679,7 +711,7 @@
 
   <!-- Event 4964: Special Groups Assigned -->
   <rule id="100061" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^4964$</field>
     <description>Windows: Grupos especiales han sido asignados a un nuevo inicio de sesión | Special groups have been assigned to a new logon</description>
     <mitre>
@@ -692,10 +724,284 @@
  
   <!-- Events 5478-5479: IPSec Services -->
   <rule id="100062" level="5">
-    <if_sid>60103</if_sid>
+    <if_sid>60100</if_sid>
     <field name="win.system.eventID">^547[8-9]$</field>
     <description>Windows: Servicios IPsec se ha iniciado/detenido exitosamente | IPsec Services has started/stopped successfully</description>
     <group>ipsec,system_event,pci_dss_10.6.1,</group>
+  </rule>
+
+  <!--  ACCOUNT LOGON - PRIORIDAD CRÍTICA  -->
+  
+  <!-- Event 4776: Credential Validation (NTLM) -->
+  <rule id="100063" level="3">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4776$</field>
+    <field name="win.eventdata.status">^0x0$</field>
+    <description>Windows: Validación de credenciales NTLM exitosa | NTLM credential validation successful</description>
+    <mitre>
+      <id>T1550.002</id>
+    </mitre>
+    <group>authentication_success,pci_dss_10.2.5,gdpr_IV_32.2,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <rule id="100064" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4776$</field>
+    <field name="win.eventdata.status">^0xC0000064$</field>
+    <description>Windows: Validación de credenciales NTLM fallida - Usuario no existe | NTLM credential validation failed - User does not exist</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>authentication_failed,pci_dss_10.2.4,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <rule id="100065" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4776$</field>
+    <field name="win.eventdata.status">^0xC000006A$</field>
+    <description>Windows: Validación de credenciales NTLM fallida - Contraseña incorrecta | NTLM credential validation failed - Wrong password</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+    <group>authentication_failed,pci_dss_10.2.4,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <rule id="100066" level="10" frequency="5" timeframe="300">
+    <if_matched_sid>100064,100065</if_matched_sid>
+    <same_source_ip />
+    <description>Windows: Posible ataque de fuerza bruta NTLM - Múltiples fallos de validación | Possible NTLM brute force attack - Multiple validation failures</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+    <group>authentication_failures,attack,pci_dss_11.4,gdpr_IV_35.7.d,nist_800_53_SI.4,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <rule id="100067" level="12" frequency="8" timeframe="120">
+    <if_matched_sid>100063</if_matched_sid>
+    <same_source_ip />
+    <description>Windows: Múltiples autenticaciones NTLM exitosas - Posible Pass-the-Hash | Multiple successful NTLM authentications - Possible Pass-the-Hash attack</description>
+    <mitre>
+      <id>T1550.002</id>
+    </mitre>
+    <group>authentication_success,attack,pci_dss_11.4,gdpr_IV_35.7.d,nist_800_53_SI.4,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <!--  OBJECT ACCESS HANDLES - PRIORIDAD MEDIA  -->
+
+  <!-- Event 4661: Handle to Object Requested -->
+  <rule id="100068" level="2">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4661$</field>
+    <description>Windows: Se solicitó un handle para un objeto | A handle to an object was requested</description>
+    <group>object_access,pci_dss_10.2.5,</group>
+  </rule>
+
+  <rule id="100069" level="8">
+    <if_matched_sid>100068</if_matched_sid>
+    <field name="win.eventdata.objectName">\\Device\\HarddiskVolume\d+\\Windows\\System32\\lsass\.exe</field>
+    <description>Windows: Se solicitó handle a LSASS - Posible volcado de credenciales | Handle to LSASS requested - Possible credential dumping</description>
+    <mitre>
+      <id>T1003.001</id>
+    </mitre>
+    <group>object_access,attack,pci_dss_10.6.1,gdpr_IV_35.7.d,nist_800_53_AU.6,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <!-- Event 4662: Operation Performed on Object -->
+  <rule id="100070" level="2">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4662$</field>
+    <description>Windows: Se realizó una operación en un objeto | An operation was performed on an object</description>
+    <group>object_access,pci_dss_10.2.5,</group>
+  </rule>
+
+  <rule id="100071" level="8">
+    <if_matched_sid>100070</if_matched_sid>
+    <field name="win.eventdata.objectName">CN=.*,CN=Users,DC=</field>
+    <field name="win.eventdata.properties">msDS-KeyCredentialLink</field>
+    <description>Windows: Modificación de atributo msDS-KeyCredentialLink - Posible Shadow Credentials | msDS-KeyCredentialLink attribute modified - Possible Shadow Credentials attack</description>
+    <mitre>
+      <id>T1556.001</id>
+    </mitre>
+    <group>object_access,attack,pci_dss_10.6.1,gdpr_IV_35.7.d,nist_800_53_AU.6,tsc_CC6.1,tsc_CC6.8,</group>
+  </rule>
+
+  <!--  ACCOUNT MANAGEMENT ADDITIONAL - PRIORIDAD ALTA  -->
+
+  <!-- Event 4695: Unprotection of Protected Data -->
+  <rule id="100072" level="8">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4695$</field>
+    <description>Windows: Intento de desproteger datos protegidos auditables | Unprotection of auditable protected data was attempted</description>
+    <mitre>
+      <id>T1552.001</id>
+      <id>T1555.003</id>
+    </mitre>
+    <group>attack,data_protection,pci_dss_10.6.1,gdpr_IV_35.7.d,nist_800_53_AU.6,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <!-- Event 4723: Password Change Attempt -->
+  <rule id="100073" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4723$</field>
+    <description>Windows: Se intentó cambiar una contraseña de cuenta | An attempt was made to change an account's password</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+    <group>account_changed,pci_dss_10.2.5,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,tsc_CC6.8,</group>
+  </rule>
+
+  <!-- Event 4724: Password Reset - COVERED IN local_rules_override.xml (Rules 60103, 100110-100112) -->
+
+  <!-- Events 5376-5377: Credential Manager -->
+  <rule id="100074" level="6">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^5376$</field>
+    <description>Windows: Se hizo copia de seguridad de las credenciales del Administrador de credenciales | Credential Manager credentials were backed up</description>
+    <mitre>
+      <id>T1555.003</id>
+    </mitre>
+    <group>data_protection,pci_dss_10.2.5,gdpr_IV_35.7.d,nist_800_53_AU.14,tsc_CC6.8,</group>
+  </rule>
+
+  <rule id="100075" level="7">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^5377$</field>
+    <description>Windows: Se restauraron las credenciales del Administrador de credenciales desde una copia de seguridad | Credential Manager credentials were restored from a backup</description>
+    <mitre>
+      <id>T1555.003</id>
+    </mitre>
+    <group>data_protection,pci_dss_10.2.5,gdpr_IV_35.7.d,nist_800_53_AU.14,tsc_CC6.8,</group>
+  </rule>
+
+  <!--  ACTIVE DIRECTORY REPLICATION - PRIORIDAD MEDIA  -->
+
+  <!-- Event 4928: AD Replica Source Naming Context Established -->
+  <rule id="100076" level="4">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4928$</field>
+    <description>Windows: Se estableció un contexto de nomenclatura de origen de réplica de Active Directory | An Active Directory replica source naming context was established</description>
+    <group>active_directory,pci_dss_10.2.5,gdpr_IV_32.2,</group>
+  </rule>
+
+  <!-- Event 4929: AD Replica Source Naming Context Removed -->
+  <rule id="100077" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4929$</field>
+    <description>Windows: Se eliminó un contexto de nomenclatura de origen de réplica de Active Directory | An Active Directory replica source naming context was removed</description>
+    <group>active_directory,pci_dss_10.2.5,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!--  CREDENTIAL MANAGER & PKI ADDITIONAL - PRIORIDAD MEDIA  -->
+
+  <!-- Event 4876: Credential Manager Backup -->
+  <rule id="100078" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4876$</field>
+    <description>Windows: Copia de seguridad de credenciales del Administrador de credenciales | Credential Manager credentials backup</description>
+    <mitre>
+      <id>T1555.003</id>
+    </mitre>
+    <group>data_protection,pci_dss_10.2.5,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- Event 4886: Certificate Services Request -->
+  <rule id="100079" level="4">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4886$</field>
+    <description>Windows: Servicios de certificados recibió una solicitud de certificado | Certificate Services received a certificate request</description>
+    <group>pki,pci_dss_10.2.5,gdpr_IV_32.2,</group>
+  </rule>
+
+  <!-- Event 4887: Certificate Services Approved Request -->
+  <rule id="100080" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4887$</field>
+    <description>Windows: Servicios de certificados aprobó una solicitud de certificado y emitió un certificado | Certificate Services approved a certificate request and issued a certificate</description>
+    <group>pki,pci_dss_10.2.5,gdpr_IV_32.2,</group>
+  </rule>
+
+  <!-- Event 4899: Audit Rule Template Applied -->
+  <rule id="100081" level="4">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4899$</field>
+    <description>Windows: Se aplicó una plantilla de regla de auditoría | An audit rule template was applied</description>
+    <group>policy_changed,pci_dss_10.2.5,gdpr_IV_32.2,</group>
+  </rule>
+
+  <!-- Event 4900: Audit Rule Template Modified -->
+  <rule id="100082" level="6">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^4900$</field>
+    <description>Windows: Se modificó una plantilla de regla de auditoría | An audit rule template was modified</description>
+    <group>policy_changed,pci_dss_10.2.5,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!--  CERTIFICATE SERVICES ADDITIONAL - PRIORIDAD MEDIA  -->
+
+  <!-- Event 8222: Certificate Services -->
+  <rule id="100083" level="4">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^8222$</field>
+    <description>Windows: Evento de servicios de certificados | Certificate Services event</description>
+    <group>pki,pci_dss_10.2.5,</group>
+  </rule>
+
+  <!--  AD FEDERATION SERVICES ADDITIONAL - PRIORIDAD BAJA  -->
+
+  <!-- Event 39: AD FS Event -->
+  <rule id="100084" level="4">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^39$</field>
+    <description>Windows: Evento de AD FS | AD FS event</description>
+    <group>adfs,</group>
+  </rule>
+
+  <!-- Event 40: AD FS Event -->
+  <rule id="100085" level="4">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^40$</field>
+    <description>Windows: Evento de AD FS | AD FS event</description>
+    <group>adfs,</group>
+  </rule>
+
+  <!-- Event 41: AD FS Event -->
+  <rule id="100086" level="4">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^41$</field>
+    <description>Windows: Evento de AD FS | AD FS event</description>
+    <group>adfs,</group>
+  </rule>
+
+  <!-- Event 70: AD FS Event -->
+  <rule id="100087" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^70$</field>
+    <description>Windows: Evento de AD FS | AD FS event</description>
+    <group>adfs,</group>
+  </rule>
+
+  <!--  DIRECTORY SERVICES ACCESS ADDITIONAL - PRIORIDAD MEDIA  -->
+
+  <!-- Event 5138: Directory Service Object Undeleted -->
+  <rule id="100088" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^5138$</field>
+    <description>Windows: Un objeto del servicio de directorio fue recuperado | A directory service object was undeleted</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+    <group>active_directory,pci_dss_10.2.5,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- Event 5139: Directory Service Object Moved -->
+  <rule id="100089" level="5">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^5139$</field>
+    <description>Windows: Un objeto del servicio de directorio fue movido | A directory service object was moved</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+    <group>active_directory,pci_dss_10.2.5,gdpr_IV_35.7.d,</group>
   </rule>
 
 </group>

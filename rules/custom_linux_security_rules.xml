@@ -1,0 +1,66 @@
+<!--
+  -  Custom Linux Security Rules para Wazuh
+  -  Autor: SOC
+  -  Fecha: 2026-03-12
+  -  
+  -  Descripción: Reglas custom para eventos de seguridad Linux/Unix
+  -  incluyendo autenticación SSH, PAM, y cuentas no-nominales.
+  -  
+  -  REGLAS INCLUIDAS:
+  -  - 100103: Sesiones PAM de usuario ROOT
+  -  - 200001: SSH logon con cuenta no-nominal (Linux)
+  -  - 200002: Windows logon con cuenta no-nominal
+  -  - 200003: SSH authentication failed desde IP específica
+  -  
+  -  DEPENDENCIAS:
+  -  - CDB List: /etc/lists/no-nominal-account
+  -->
+
+<!--  SESIONES PAM - ROOT  -->
+
+<group name="pam,syslog,authentication_success,">
+
+  <rule id="100103" level="9">
+    <if_sid>5501,5502</if_sid>
+    <match>session opened for user root</match>
+    <description>Linux: Sesión de usuario ROOT iniciada (PAM) - Nivel de alerta elevado para auditoría crítica | User session opened (PAM) - Elevated alert level for critical audit (ROOT)</description>
+    <group>pci_dss_10.2.5,gpg13_7.8,gdpr_IV_32.2,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+    <mitre>
+      <id>T1078.003</id>
+    </mitre>
+  </rule>
+
+</group>
+
+<!--  AUTENTICACIÓN SSH  -->
+
+<group name="local,syslog,sshd,">
+
+  <!-- SSH authentication failed desde IP específica -->
+  <rule id="200003" level="5">
+    <if_sid>5716</if_sid>
+    <srcip>1.1.1.1</srcip>
+    <description>sshd: authentication failed from IP 1.1.1.1.</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+
+  <!-- SSH logon con cuenta no-nominal -->
+  <rule id="200001" level="10">
+    <if_sid>5715</if_sid>
+    <list field="user" lookup="match_key">etc/lists/no-nominal-account</list>
+    <description>sshd: logon with a no-nominal account $(user)</description>
+  </rule>
+
+</group>
+
+<!--  WINDOWS LOGON CON CUENTAS NO-NOMINALES  -->
+
+<group name="local,windows,">
+  
+  <rule id="200002" level="10">
+    <if_sid>60106</if_sid>
+    <list field="win.eventdata.targetUserName">etc/lists/no-nominal-account</list>
+    <description>Windows logon with a no-nominal account "$(win.eventdata.targetUserName)"</description>
+  </rule>
+
+</group>

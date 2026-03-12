@@ -1,6 +1,41 @@
-# ossec.conf - Integration Configuration Example
+# ossec.conf - Configuration Example for Custom Rules and Integrations
 # 
-# Add this block to your /var/ossec/etc/ossec.conf file
+# Add these blocks to your /var/ossec/etc/ossec.conf file
+# Location: Inside the <ossec_config> section
+
+# ============================================================================
+# SECTION 1: CUSTOM RULES AND LISTS
+# ============================================================================
+# Add this BEFORE the closing </ossec_config> tag
+# Recommended location: Near other <ruleset> blocks
+
+<ossec_config>
+  <ruleset>
+    <!-- Custom Windows Security Rules (89 rules) -->
+    <rule_files>custom_windows_security_rules.xml</rule_files>
+    
+    <!-- Custom Windows Overrides (5 rules including correlations) -->
+    <rule_files>custom_windows_overrides.xml</rule_files>
+    
+    <!-- Custom Linux Security Rules (4 rules) -->
+    <rule_files>custom_linux_security_rules.xml</rule_files>
+    
+    <!-- CDB List for non-nominal account detection -->
+    <list>etc/lists/no-nominal-account</list>
+  </ruleset>
+</ossec_config>
+
+# IMPORTANT: After adding the ruleset configuration:
+# 1. Copy rule files to /var/ossec/etc/rules/
+# 2. Copy CDB list to /var/ossec/etc/lists/
+# 3. Compile CDB list: /var/ossec/bin/ossec-makelists
+# 4. Restart Wazuh: systemctl restart wazuh-manager
+
+
+# ============================================================================
+# SECTION 2: TEAMS INTEGRATION (OPTIONAL)
+# ============================================================================
+# Add this block for Microsoft Teams notifications
 # Location: Anywhere before the closing </ossec_config> tag
 # Recommended: Near other <integration> blocks
 
