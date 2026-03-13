@@ -660,7 +660,7 @@ Este proyecto está bajo la Licencia MIT - ver [LICENSE](LICENSE) para detalles.
 ## 👤 Autor
 
 **Mateo Villablanca**
-- GitHub: [@mvillablanca](https://github.com/mvillablanca)
+- GitHub: [Brix](https://github.com/WhiteMooncy)
 
 
 ## 📚 Tecnologías Utilizadas
