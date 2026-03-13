@@ -162,9 +162,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Infrastructure
 - **Tested Servers**:
-  - Old Server: 10.27.20.171 (RHEL/CentOS - Wazuh 4.x)
-  - New Server: 10.27.20.181 (Migration target)
-  - Windows Agent: 10.27.20.182 (Windows Server)
+  - Old Server: 192.168.X.X (RHEL/CentOS - Wazuh 4.x)
+  - New Server: 192.168.X.Y (Migration target)
+  - Windows Agent: 192.168.X.Z (Windows Server)
 
 - **Wazuh Version**: Tested on Wazuh 4.3+
 - **Python Version**: Requires Python 3.6+

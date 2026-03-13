@@ -8,7 +8,7 @@ Este directorio contiene las listas CDB utilizadas por las reglas custom de Wazu
 
 **Formato:** key:value (cada línea debe tener el formato `cuenta:cuenta`)
 
-**Uso:** Referenciado en `custom_linux_security_rules.xml` (reglas 200001-200003)
+**Uso:** Referenciado en `custom_linux_security_rules.xml` (reglas 200001, 200002 y 200006)
 
 **Contenido:**
 - admin

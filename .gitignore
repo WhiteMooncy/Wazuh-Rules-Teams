@@ -42,3 +42,7 @@ test_output/
 # Documentos temporales
 ~$*.docx
 ~$*.xlsx
+
+# Internal files (credenciales, IPs internas, datos sensibles)
+internal/
+.internal/

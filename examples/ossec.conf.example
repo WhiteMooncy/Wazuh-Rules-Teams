@@ -17,7 +17,7 @@
     <!-- Custom Windows Overrides (5 rules including correlations) -->
     <rule_files>custom_windows_overrides.xml</rule_files>
     
-    <!-- Custom Linux Security Rules (4 rules) -->
+    <!-- Custom Linux Security Rules (7 rules) -->
     <rule_files>custom_linux_security_rules.xml</rule_files>
     
     <!-- CDB List for non-nominal account detection -->

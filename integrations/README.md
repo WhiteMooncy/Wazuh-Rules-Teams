@@ -1,49 +1,39 @@
 # Wazuh Teams Integration
 
-This directory contains the Microsoft Teams integration scripts for Wazuh alert notifications with summary accumulation.
+This directory contains the active Microsoft Teams integration for the canonical project.
 
 ## Files
 
 ### custom-teams-summary.py
-Main integration script with intelligent alert accumulation (29KB).
 
-**Features:**
-- **Alert Accumulation**: Groups multiple alerts before sending to reduce noise
-- **Smart Thresholds**: Configurable alert count and time-based triggers
-- **Critical Bypass**: High-severity alerts (level ≥15) sent immediately
-- **Persistent Cache**: Uses pickle for alert storage across restarts
-- **Adaptive Cards**: Rich formatted messages with statistics and details
-- **SSL Verification**: Disabled for internal Power Automate webhooks
-- **Error Handling**: Comprehensive logging and retry logic
+Main integration script with alert accumulation and immediate delivery for critical events.
 
-**Configuration:**
-```python
-MAX_ALERTS_BEFORE_SUMMARY = 3  # Send summary after this many alerts
-SUMMARY_INTERVAL_HOURS = 24     # Or after this many hours
-CRITICAL_LEVEL = 15             # Alerts at this level bypass accumulation
+**Current behavior:**
+- Accumulates non-critical alerts and sends a summary when thresholds are met.
+- Sends alerts at or above the configured critical level immediately.
+- Stores cache in JSON format.
+- Automatically migrates the legacy pickle cache if it exists.
+- Uses Adaptive Cards for both summary and immediate alerts.
+- Supports environment-based configuration to avoid hardcoded infrastructure values.
+
+**Environment variables:**
+
+```bash
+WAZUH_TEAMS_CACHE_FILE=/var/ossec/logs/teams_alerts_cache.json
+WAZUH_TEAMS_LEGACY_CACHE_FILE=/var/ossec/logs/teams_alerts_cache.pkl
+WAZUH_SUMMARY_INTERVAL_HOURS=24
+WAZUH_MAX_ALERTS_BEFORE_SUMMARY=3
+WAZUH_CRITICAL_LEVEL=15
+WAZUH_TEAMS_VERIFY_SSL=false
+WAZUH_DASHBOARD_URL=https://wazuh.example.invalid
 ```
 
-**Key Functions:**
-- `load_cache()`: Loads persisted alert data from disk
-- `save_cache()`: Saves current alerts to disk
-- `should_send_summary()`: Determines if summary should be sent
-- `build_summary_card()`: Creates Teams Adaptive Card for summary
-- `build_immediate_alert()`: Creates Teams card for critical alerts
-- `send_msg()`: Sends HTTP requests to Power Automate webhook
+**Recommended minimum override:**
 
-### custom-teams-direct.py *(optional alternative)*
-Direct alert integration without accumulation - sends every alert immediately.
-
-**Use Case**: High-criticality environments where every alert must be reviewed individually.
-
-### wrapper_custom-teams.sh
-Bash wrapper for Python integration execution.
-
-**Purpose:**
-- Sets proper environment variables
-- Handles Python path resolution
-- Provides error logging
-- Ensures correct working directory
+```bash
+export WAZUH_DASHBOARD_URL="https://YOUR-WAZUH-DASHBOARD"
+export WAZUH_TEAMS_VERIFY_SSL=false
+```
 
 ## Installation
 
@@ -77,6 +67,12 @@ echo "$ALERT_JSON" | sudo /var/ossec/integrations/custom-teams-summary.py \
   "YOUR_WEBHOOK_URL" \
   11 \
   "custom-teams-summary"
+```
+
+If you want the dashboard button to open a real environment, export the URL first:
+
+```bash
+export WAZUH_DASHBOARD_URL="https://YOUR-WAZUH-DASHBOARD"
 ```
 
 ### 5. Configure in ossec.conf
@@ -148,9 +144,11 @@ CRITICAL_LEVEL = 15  # Alerts ≥ this level sent immediately
 
 ## Cache System
 
-The integration uses a persistent cache to store alerts:
+The integration uses a persistent cache to store alerts.
 
-**Cache Location:** `/var/ossec/logs/teams_alerts_cache.pkl`
+**Default cache location:** `/var/ossec/logs/teams_alerts_cache.json`
+
+**Legacy migration source:** `/var/ossec/logs/teams_alerts_cache.pkl`
 
 **Cache Structure:**
 ```python
@@ -174,24 +172,24 @@ The integration uses a persistent cache to store alerts:
 
 **View cache contents:**
 ```bash
-sudo python3 -c "import pickle; print(pickle.load(open('/var/ossec/logs/teams_alerts_cache.pkl','rb')))"
+sudo python3 -c "import json; print(json.load(open('/var/ossec/logs/teams_alerts_cache.json','r', encoding='utf-8')))"
 ```
 
 **Clear cache manually:**
 ```bash
-sudo rm /var/ossec/logs/teams_alerts_cache.pkl
+sudo rm /var/ossec/logs/teams_alerts_cache.json
 ```
 
 **Reset summary counter:**
 ```bash
 sudo python3 << 'EOF'
-import pickle
+import json
 import os
-cache_file = '/var/ossec/logs/teams_alerts_cache.pkl'
+cache_file = '/var/ossec/logs/teams_alerts_cache.json'
 if os.path.exists(cache_file):
-    data = pickle.load(open(cache_file, 'rb'))
+  data = json.load(open(cache_file, 'r', encoding='utf-8'))
     data['summary_count'] = 0
-    pickle.dump(data, open(cache_file, 'wb'))
+  json.dump(data, open(cache_file, 'w', encoding='utf-8'))
     print("[OK] Summary counter reset")
 EOF
 ```
@@ -333,7 +331,7 @@ Total Alerts: 5
 • 100007: Service Installed (1)
 • 100048: Event Log Cleared (1)
 
-Dashboard: http://10.27.20.171:5601/...
+Dashboard: http://your-wazuh-server:5601/...
 ```
 
 ### Critical Alert Message
@@ -351,7 +349,7 @@ Source: Windows Security
 
 ⚠️ IMMEDIATE ACTION REQUIRED
 
-Dashboard: http://10.27.20.171:5601/...
+Dashboard: http://your-wazuh-server:5601/...
 ```
 
 ## Performance Considerations

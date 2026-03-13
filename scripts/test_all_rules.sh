@@ -1,10 +1,10 @@
 #!/bin/bash
-# test_all_rules.sh - Comprehensive test of all 67 Wazuh custom rules
-# Tests every rule in the custom_windows_security_rules.xml and local_rules_override.xml
+# test_all_rules.sh - Comprehensive test of all 101 Wazuh custom rules
+# Tests every rule in the custom_windows_security_rules.xml, custom_windows_overrides.xml, and custom_linux_security_rules.xml
 #
 # Usage: sudo bash test_all_rules.sh [webhook_url]
 #
-# This script generates alerts for ALL 67 rules organized in 10 phases:
+# This script generates alerts for ALL 101 rules organized in 10 phases:
 #   1. Kerberos (6 rules)
 #   2. Services (2 rules)
 #   3. Processes (5 rules)
@@ -27,7 +27,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   WAZUH COMPREHENSIVE RULE TEST - ALL 67 RULES           ║${NC}"
+echo -e "${GREEN}║   WAZUH COMPREHENSIVE RULE TEST - ALL 101 RULES          ║${NC}"
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo "Webhook: ${WEBHOOK_URL:0:60}..."
@@ -46,7 +46,7 @@ send_alert() {
     local event_id=$4
     
     ((contador++))
-    echo -ne "${YELLOW}[${contador}/67]${NC} Rule ${rule_id} (L${rule_level}): "
+    echo -ne "${YELLOW}[${contador}/101]${NC} Rule ${rule_id} (L${rule_level}): "
     echo "$description" | cut -c1-60
     
     cat <<EOF | sudo $SCRIPT "$WEBHOOK_URL" 11 "custom-teams-summary" 2>&1 | grep -E "(OK|ERROR|INFO)" | head -1
@@ -187,7 +187,7 @@ echo -e "${GREEN}║               TEST COMPLETED SUCCESSFULLY                 �
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${YELLOW}Summary:${NC}"
-echo "  ✓ Total rules tested: ${contador}/67"
+echo "  ✓ Total rules tested: ${contador}/101"
 echo "  ✓ Phases completed: 10/10"
 echo ""
 echo -e "${YELLOW}Expected Results in Teams:${NC}"

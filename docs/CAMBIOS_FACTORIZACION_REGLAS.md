@@ -620,7 +620,7 @@ ls -lh /var/ossec/etc/lists/no-nominal-account*
 
 ### 6. Test del Dashboard
 
-**URL:** https://10.27.20.171
+**URL:** https://your-wazuh-dashboard
 
 **Pruebas Realizadas:**
 - ✅ Acceso a Management → Rules
@@ -770,7 +770,7 @@ tail -100 /var/ossec/logs/ossec.log | grep -c "ERROR"
 **Información Sensible:**
 - Este documento NO contiene credenciales
 - Rutas de archivos son estándar de Wazuh
-- IPs mencionadas son de ejemplo (1.1.1.1) o internas (10.27.20.171)
+- IPs mencionadas son de ejemplo (pueden ser públicas o internas)
 
 **Backup:**
 - Archivo original respaldado: `local_rules.xml.backup`

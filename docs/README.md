@@ -1,16 +1,40 @@
-# Documentation
+# 📚 Documentación Completa
 
-Complete documentation for Wazuh custom rules and Teams integration.
+> **Bienvenido a la documentación del proyecto Wazuh Custom Rules & Teams Integration.**
 
-## Quick Links
+> 🗺️ **¿No sabes por dónde empezar?** Lee primero [DOCUMENTATION_MAP.md](./DOCUMENTATION_MAP.md) para una guía visual.
 
-| Document | Description | Use When |
-|----------|-------------|----------|
-| [INSTALLATION.md](INSTALLATION.md) | Step-by-step installation guide | Setting up from scratch |
-| [MIGRATION.md](MIGRATION.md) | Server-to-server migration | Moving to new infrastructure |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Problem diagnosis and solutions | Experiencing issues |
-| [RULES_REFERENCE.md](RULES_REFERENCE.md) | Complete rules documentation | Understanding alert rules |
-| [TEAMS_SETUP.md](TEAMS_SETUP.md) | Power Automate configuration | Configuring Teams webhook |
+## 🎓 ¿Por Dónde Empezar?
+
+### Si Eres Principiante (Recomendado)
+👉 **[LEARNING_PATH.md](./LEARNING_PATH.md)** ← Comienza aquí  
+Ruta estructurada de 2-3 horas que te enseña todo desde cero.  
+✅ Explica el QUÉ y el POR QUÉ  
+✅ Incluye ejemplos y diagramas  
+✅ Paso a paso para instalar  
+✅ 5 módulos progresivos
+
+### Si Tienes Prisa
+👉 **[QUICK_START.md](./QUICK_START.md)** ← 10 minutos  
+Setup mínimo para empezar rápido.
+
+### Si Ya Sabes de Wazuh
+👉 **[INSTALLATION.md](INSTALLATION.md)** ← Directamente
+
+---
+
+## 📖 Todos los Documentos
+
+| Documento | Tipo | Tiempo | Para quién |
+|-----------|------|--------|----------|
+| [DOCUMENTATION_MAP.md](./DOCUMENTATION_MAP.md) | 🗺️ Guía | 5 min | Todos (empieza aquí) |
+| [LEARNING_PATH.md](./LEARNING_PATH.md) | 🎓 Tutorial | 2-3h | Principiantes |
+| [QUICK_START.md](./QUICK_START.md) | 🏃 Rápido | 10min | Apurados |
+| [INSTALLATION.md](INSTALLATION.md) | 📖 Completo | 30min | DevOps |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 🆘 Diagnóstico | Var. | Ops |
+| [RULES_REFERENCE.md](RULES_REFERENCE.md) | 📋 Referencia | 20min | Analysts |
+| [TEAMS_SETUP.md](TEAMS_SETUP.md) | 🔗 Config | 15min | Teams |
+| [MIGRATION.md](MIGRATION.md) | 🔄 Upgrade | 10min | Usuarios |
 
 ## Documentation Overview
 

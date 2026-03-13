@@ -2,17 +2,54 @@
 
 **Sistema completo de reglas personalizadas y integración con Microsoft Teams para Wazuh SIEM**
 
+> 🎯 **¿Eres nuevo aquí?** Empieza en [GETTING_STARTED.md](./GETTING_STARTED.md) (3 opciones para comenzar)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Wazuh Version](https://img.shields.io/badge/Wazuh-4.x-blue)](https://wazuh.com/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey)](https://www.linux.org/)
+[![Rules](https://img.shields.io/badge/Custom%20Rules-101-brightgreen)](./rules/)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-success)]()
 
-## 📋 Descripción
+## 📚 Documentación Rápida
+
+> 🎓 **¿Eres principiante?** Empieza con [LEARNING_PATH.md](./docs/LEARNING_PATH.md) (2-3h)  
+> ⚡ **¿Tienes prisa?** Ve a [QUICK_START.md](./docs/QUICK_START.md) (10 min)  
+> 🗺️ **¿No sabes por dónde?** Usa [DOCUMENTATION_MAP.md](./docs/DOCUMENTATION_MAP.md) (guía visual)
+
+| Documento | Descripción | Tiempo | Para quién |
+|-----------|-------------|--------|----------|
+| 🎓 [LEARNING_PATH.md](./docs/LEARNING_PATH.md) | Ruta de aprendizaje desde 0 (recomendado) | 2-3h | Principiantes |
+| 🏃 [QUICK_START.md](./docs/QUICK_START.md) | Setup en 10 minutos | 10 min | Apurados |
+| 📖 [INSTALLATION.md](./docs/INSTALLATION.md) | Setup completo y detallado | 30 min | DevOps, Admins |
+| 🆘 [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | Diagnóstico y resolución | Variable | Ops, Debuggers |
+| 📋 [RULES_REFERENCE.md](./docs/RULES_REFERENCE.md) | Detalles de todas las 101 reglas | 20 min | Analysts, Auditors |
+| 🔗 [TEAMS_SETUP.md](./docs/TEAMS_SETUP.md) | Configurar Microsoft Teams | 15 min | Teams Admins |
+| 🔄 [MIGRATION.md](./docs/MIGRATION.md) | Actualizar desde versiones anteriores | 10 min | Existing users |
+| ✅ [CHANGELOG.md](./CHANGELOG.md) | Histórico de cambios y versiones | 5 min | Project managers |
+
+---
+## 📑 Tabla de Contenidos
+
+- [📚 Documentación Rápida](#-documentación-rápida)
+- [📑 Tabla de Contenidos](#-tabla-de-contenidos)
+- [🎯 Características Principales](#-características-principales)
+- [📊 Impacto](#-impacto)
+- [🚀 Instalación Rápida](#-instalación-rápida)
+- [📂 Estructura del Proyecto](#-estructura-del-proyecto)
+- [🔧 Configuración](#-configuración)
+- [📋 Scripts Disponibles](#-scripts-disponibles)
+- [🧪 Testing](#-testing)
+- [📝 Licencia](#-licencia)
+- [🤝 Contribuciones](#-contribuciones)
+
+---
+## 📖 Descripción
 
 Este proyecto proporciona una implementación completa de:
-- **98 reglas custom** factorizadas en 3 archivos especializados:
+- **101 reglas custom** factorizadas en 3 archivos especializados:
   - **Windows Security** (89 reglas): Eventos críticos de seguridad Windows
   - **Windows Overrides** (5 reglas): Ajustes de severidad y correlaciones
-  - **Linux Security** (4 reglas): Autenticación SSH y cuentas no-nominales
+  - **Linux Security** (7 reglas): Autenticación SSH, cuentas no-nominales y correlaciones
 - **CDB Lists**: Sistema de listas para detección de cuentas genéricas
 - **Integración inteligente con Microsoft Teams** usando Power Automate
 - **Sistema de resúmenes acumulativos** (envío cada 3 alertas o 24 horas)
@@ -27,8 +64,6 @@ Las reglas están organizadas en **3 archivos especializados** para mejor manten
 
 #### 1️⃣ custom_windows_security_rules.xml (89 reglas)
 **Propósito:** Eventos críticos de seguridad Windows no cubiertos por reglas base
-
-**Categorías:**
 
 **Categorías:**
 - **Kerberos Authentication** (6 reglas): TGT, Service Tickets, Kerberoasting
@@ -57,15 +92,16 @@ Las reglas están organizadas en **3 archivos especializados** para mejor manten
 
 **Base:** if_sid>60100 | **Nota:** Este archivo incluye reglas que sobrescriben comportamiento base de Wazuh
 
-#### 3️⃣ custom_linux_security_rules.xml (4 reglas)
-**Propósito:** Seguridad Linux/Unix y SSH
+#### 3️⃣ custom_linux_security_rules.xml (7 reglas)
+**Propósito:** Seguridad Linux/Unix, SSH y correlación de cuentas no-nominales
 
-- **100103**: PAM root authentication (Level 8)
-- **200001-200003**: Non-nominal account detection (admin, test, service, etc.)
+- **100103**: PAM root authentication (Level 9)
+- **200001, 200003, 200004, 200006**: Detecciones y correlación SSH
+- **200002, 200005**: Detecciones y correlación Windows con cuenta no-nominal
   - Usa CDB list `/var/ossec/etc/lists/no-nominal-account`
-  - Level 10 (Login) y Level 12 (Sudo execution)
+  - Incluye correlaciones críticas de 5 eventos en 120 segundos
 
-**IDs:** 100103, 200001-200003 | **Requisito:** CDB list compilada
+**IDs:** 100103, 200001-200006 | **Requisito:** CDB list compilada
 
 ### ✅ CDB Lists System
 
@@ -165,7 +201,7 @@ nano /var/ossec/etc/ossec.conf
     <!-- Custom Windows Overrides (5 rules) -->
     <rule_files>custom_windows_overrides.xml</rule_files>
     
-    <!-- Custom Linux Security Rules (4 rules) -->
+    <!-- Custom Linux Security Rules (7 rules) -->
     <rule_files>custom_linux_security_rules.xml</rule_files>
     
     <!-- CDB List for non-nominal accounts -->
@@ -208,6 +244,15 @@ chmod +x test_alerts.sh
 # Ejecutar (generará 17 alertas de prueba)
 ./test_alerts.sh
 ```
+
+### Paso 6: Validar el ruleset antes de desplegar
+
+```bash
+cd /path/to/Wazuh-Rules-Teams/scripts
+python3 validate_rules.py
+```
+
+Este chequeo detecta IDs duplicados y solapamientos con `local_rules_override.xml`.
 
 ## 📁 Estructura del Proyecto
 
@@ -446,6 +491,147 @@ EOF
 ```
 
 Ver [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para más problemas comunes.
+
+## 📂 Estructura del Proyecto
+
+```
+.
+├── docs/                                    # Documentación completa
+│   ├── INSTALLATION.md                      # Guía de instalación paso a paso
+│   ├── TROUBLESHOOTING.md                   # Diagnóstico y resolución de problemas
+│   ├── RULES_REFERENCE.md                   # Referencia detallada de las 101 reglas
+│   ├── TEAMS_SETUP.md                       # Configuración de Teams integration
+│   ├── MIGRATION.md                         # Actualización desde versiones anteriores
+│   └── BRUTE_FORCE_DETECTION_FIXES.md       # Detalles técnicos de detección
+│
+├── rules/                                   # Archivos de reglas XML (3 archivos)
+│   ├── custom_windows_security_rules.xml    # 89 reglas Windows
+│   ├── custom_windows_overrides.xml         # 5 reglas de override y correlación
+│   └── custom_linux_security_rules.xml      # 7 reglas Linux
+│
+├── lists/                                   # CDB Lists para correlación
+│   └── no-nominal-account                   # Cuentas genéricas (admin, test, etc)
+│
+├── integrations/                            # Scripts de integración
+│   ├── custom-teams-summary.py              # Integrador Teams (acumulación + retry)
+│   └── README.md                            # Documentación de integración
+│
+├── scripts/                                 # Herramientas y utilities
+│   ├── test_all_rules.sh                    # Test suite para 101 reglas
+│   ├── test_alerts.sh                       # Test rápido de sample rules
+│   ├── validate_rules.py                    # Validador de syntax y duplicados
+│   └── clean_cache.py                       # Limpieza de caché (opcional)
+│
+├── tests/                                   # Unit tests (Python)
+│   ├── test_cache.py                        # 20+ tests para funciones de cache
+│   ├── test_retry_logic.py                  # Tests de retry con backoff
+│   └── conftest.py                          # Pytest configuration
+│
+├── examples/                                # Ejemplos de configuración
+│   ├── ossec.conf.example                   # Configuración ejemplo de ossec.conf
+│   └── README.md                            # Notas sobre ejemplos
+│
+├── .git-pre-commit-hook.sh                  # Pre-commit validation hook
+├── CHANGELOG.md                             # Histórico de versiones
+├── LICENSE                                  # Licencia MIT
+└── README.md                                # Este archivo
+```
+
+## 📋 Scripts Disponibles
+
+### Validación
+
+**`validate_rules.py`** - Validador de reglas
+```bash
+# Ejecutar validación
+python3 validate_rules.py
+
+# Salida esperada:
+# Rule count by file:
+#   custom_windows_security_rules.xml: 89 rules
+#   custom_windows_overrides.xml: 5 rules
+#   custom_linux_security_rules.xml: 7 rules
+# Total: 101 custom rules
+```
+
+### Testing
+
+**`test_all_rules.sh`** - Test completo (101 reglas)
+```bash
+# Requiere: Wazuh Manager instalado + wazuh-logtest
+sudo bash test_all_rules.sh
+
+# Prueba 101 reglas en 10 fases
+# Tiempo: ~5 minutos
+```
+
+**`test_alerts.sh`** - Test rápido (~17 sample rules)
+```bash
+# Requiere: Wazuh Manager instalado
+sudo bash test_alerts.sh
+
+# Tiempo: ~30 segundos
+# Bueno para validación rápida
+```
+
+### Utilities
+
+**`clean_cache.py`** - Limpiar caché de Teams (opcional)
+```bash
+# Limpiar caché viejo (>7 días)
+python3 clean_cache.py --days 7
+
+# Resetear caché completamente
+python3 clean_cache.py --reset
+```
+
+## 🧪 Testing
+
+### Unit Tests (Python)
+
+```bash
+# Instalar dependencies
+pip3 install pytest pytest-cov
+
+# Ejecutar todos los tests
+cd Wazuh-Rules-Teams
+python3 -m pytest tests/ -v
+
+# Con cobertura
+python3 -m pytest tests/ --cov=integrations --cov=scripts
+
+# Test específico
+python3 -m pytest tests/test_cache.py::TestCacheFunctions::test_cache_template_structure -v
+```
+
+### Pre-commit Hook
+
+```bash
+# Instalar hook
+cp .git-pre-commit-hook.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+
+# El hook ejecuta automáticamente:
+# ✓ Valida sintaxis XML de reglas modificadas
+# ✓ Detecta rule IDs duplicados
+# ✓ Previene commits inválidos
+```
+
+### Integration Tests (con Wazuh)
+
+```bash
+# En servidor Wazuh
+cd /path/to/wazuh-custom-rules-teams
+
+# Test rápido (30 segundos)
+sudo bash scripts/test_alerts.sh
+
+# Test completo (5 minutos)
+sudo bash scripts/test_all_rules.sh
+
+# Con webhook de prueba
+WEBHOOK_URL="https://tu-webhook-url" sudo bash scripts/test_all_rules.sh
+```
 
 ## 🤝 Contribuir
 

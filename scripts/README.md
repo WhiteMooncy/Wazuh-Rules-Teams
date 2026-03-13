@@ -2,7 +2,125 @@
 
 This directory contains scripts for testing alert rules, simulating attacks, and managing the Wazuh integration.
 
+> ⚠️ **Note:** Sensitive files (e.g., INSTRUCCIONES_ATAQUE_10.27.20.183.md) with internal IPs have been moved to `/internal/` folder for security. 
+> These scripts in `/scripts/` have been sanitized with placeholder IPs (e.g., `192.168.X.X`).
+
 ## Testing Scripts
+
+### validate_rules.py
+
+Validates the canonical XML ruleset before deployment.
+
+**Purpose:**
+- Count rules per XML file.
+- Detect duplicate rule IDs.
+- Detect overlaps involving `local_rules_override.xml`.
+
+**Usage:**
+
+```bash
+python3 validate_rules.py
+```
+
+**Expected behavior:**
+- Exit code `0` when no duplicate IDs or deprecated overlaps are found.
+- Exit code `1` when duplicate IDs or deprecated overlaps exist.
+
+Run this before copying rule files to `/var/ossec/etc/rules/`.
+
+---
+
+### test_brute_force_attack.sh ⭐ NEW
+Simulates brute force attacks to test frequency-based correlation rules.
+
+**Purpose:** Test detection of multiple login attempts with non-nominal accounts (Rules 200004/200005).
+
+**Usage:**
+```bash
+# Basic test (6 SSH login attempts with 'admin') - LOCAL SIMULATION
+sudo bash test_brute_force_attack.sh
+
+# Custom test (10 attempts, 1 second interval)
+sudo bash test_brute_force_attack.sh -a 10 -i 1
+
+# Test with different user
+sudo bash test_brute_force_attack.sh -u test -s 192.168.1.50
+
+# Verify existing alerts only
+sudo bash test_brute_force_attack.sh -v
+
+# See all options
+sudo bash test_brute_force_attack.sh --help
+```
+
+**What it tests:**
+- Rule 200001: SSH logon with non-nominal account (Level 11)
+- Rule 200004: CRITICAL - Multiple SSH logins correlation (Level 15, freq: 5 in 120s)
+- Rule 200002: Windows logon with non-nominal account (Level 12)
+- Rule 200005: CRITICAL - Multiple Windows logins correlation (Level 15, freq: 5 in 120s)
+
+**Expected Results:**
+- Multiple individual alerts (Rule 200001, Level 11) sent to Teams
+- 1 CRITICAL correlation alert (Rule 200004, Level 15) when threshold reached
+- MITRE: T1110 (Brute Force) + T1078.003 (Valid Accounts: Local)
+
+**Documentation:** See [TEST_BRUTE_FORCE.md](TEST_BRUTE_FORCE.md) for detailed usage guide.
+
+---
+
+### test_brute_force_remote.sh ⭐ NEW - RECOMMENDED
+Simulates REAL SSH brute force attacks from external Linux machine (e.g., 10.27.20.183).
+
+**Purpose:** Test realistic brute force detection with actual SSH traffic from external attacker.
+
+**Requirements:**
+- External Linux machine (e.g., 10.27.20.183)
+- `sshpass` package installed: `sudo apt install sshpass`
+
+**Quick Start from 10.27.20.183:**
+```bash
+# 1. Copy script to attacker machine
+scp scripts/test_brute_force_remote.sh admin_emtec@10.27.20.183:~/
+
+# 2. Execute attack
+ssh admin_emtec@10.27.20.183
+bash ~/test_brute_force_remote.sh
+
+# 3. Verify on Wazuh server (from another terminal)
+ssh root@10.27.20.171
+tail -50 /var/ossec/logs/alerts/alerts.log | grep "10.27.20.183"
+```
+
+**Usage:**
+```bash
+# Basic remote attack (6 SSH attempts to 10.27.20.171)
+bash ~/test_brute_force_remote.sh
+
+# Intensive attack (10 attempts, 1 second interval)
+bash ~/test_brute_force_remote.sh -a 10 -i 1
+
+# Custom target and user
+bash ~/test_brute_force_remote.sh -t 10.27.20.171 -u administrator
+
+# See all options
+bash ~/test_brute_force_remote.sh --help
+```
+
+**What it does:**
+- Generates REAL SSH connection attempts from external IP (10.27.20.183)
+- Uses incorrect password by design (simulates actual brute force)
+- Attempts will fail but generate authentic SSH logs on target
+- Wazuh detects patterns and triggers correlation rules
+
+**Advantages over local simulation:**
+- ✅ Real network traffic from external source
+- ✅ Accurate source IP in alerts (10.27.20.183)
+- ✅ Tests actual SSH authentication failures
+- ✅ Realistic production scenario
+
+**Documentation:** See [INSTRUCCIONES_ATAQUE_10.27.20.183.md](INSTRUCCIONES_ATAQUE_10.27.20.183.md) for step-by-step instructions.
+
+---
 
 ### test_alerts.sh
 Quick test of 17 representative rules covering all major categories.
@@ -133,7 +251,7 @@ sudo bash scripts/clear_cache.sh
 **Example:**
 ```bash
 #!/bin/bash
-sudo rm /var/ossec/logs/teams_alerts_cache.pkl
+sudo rm /var/ossec/logs/teams_alerts_cache.json
 echo "[OK] Cache cleared"
 ```
 

@@ -9,6 +9,10 @@
   -  NOTA: El atributo overwrite="yes" indica que esta regla reemplaza
   -  completamente la regla original con el mismo ID.
   -
+  -  ADVERTENCIA: Este archivo pertenece a la estructura anterior.
+  -  No debe cargarse junto con custom_windows_overrides.xml ni
+  -  custom_linux_security_rules.xml dentro de la arquitectura factorizada.
+  -
   - Example 
   -<group name="local,syslog,sshd,">
   -  Dec 10 01:02:02 host sshd[1234]: Failed none for root from 1.1.1.1 port 1066 ssh2

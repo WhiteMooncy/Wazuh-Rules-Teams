@@ -1,6 +1,6 @@
 # Wazuh Custom Rules - Factorized Architecture v2.0
 
-Este directorio contiene las reglas custom de Wazuh organizadas en **3 archivos especializados** (98 reglas totales) para mejor mantenimiento, escalabilidad y separación de responsabilidades.
+Este directorio contiene las reglas custom de Wazuh organizadas en **3 archivos especializados** (101 reglas activas) para mejor mantenimiento, escalabilidad y separación de responsabilidades.
 
 ## 📁 Arquitectura de Archivos
 
@@ -60,9 +60,9 @@ Este directorio contiene las reglas custom de Wazuh organizadas en **3 archivos 
 ---
 
 ### 3️⃣ custom_linux_security_rules.xml
-**4 reglas** | **~2.2 KB** | **IDs: 100103, 200001-200003**
+**7 reglas** | **~2.5 KB** | **IDs: 100103, 200001-200006**
 
-**Propósito:** Seguridad Linux/Unix, autenticación SSH y detección de cuentas no-nominales.
+**Propósito:** Seguridad Linux/Unix, autenticación SSH y correlación de cuentas no-nominales en Linux y Windows.
 
 **Dependencias:**
 - `if_sid>5501` (PAM authentication messages)
@@ -73,10 +73,13 @@ Este directorio contiene las reglas custom de Wazuh organizadas en **3 archivos 
 
 | Rule ID | Descripción | Level | Detección |
 |---------|-------------|-------|-----------|
-| 100103 | PAM: Session opened for ROOT user | 8 | Autenticación root via PAM |
-| 200001 | Non-nominal account login detected | 10 | Login con cuenta genérica (SSH/local) |
-| 200002 | Sudo execution by non-nominal account | 12 | Uso de sudo con cuenta genérica |
-| 200003 | Non-nominal account authentication | 8 | Autenticación con cuenta compartida |
+| 100103 | PAM: Session opened for ROOT user | 9 | Apertura de sesión root vía PAM |
+| 200001 | SSH failed login with non-nominal account | 11 | Intento SSH fallido con cuenta genérica |
+| 200002 | Windows logon with non-nominal account | 12 | Inicio de sesión Windows con cuenta genérica |
+| 200003 | SSH authentication failed from documentation IP | 5 | Regla puntual para IP de ejemplo reservada |
+| 200004 | Multiple SSH failed logins with non-nominal accounts | 15 | Correlación de 5 eventos en 120 segundos |
+| 200005 | Multiple Windows logons with non-nominal accounts | 15 | Correlación de 5 eventos en 120 segundos |
+| 200006 | SSH successful login with nominal account | 3 | Inicio de sesión SSH legítimo |
 
 **CDB List (no-nominal-account):**
 Cuentas genéricas/compartidas detectadas:
@@ -101,6 +104,8 @@ ls -lh /var/ossec/etc/lists/no-nominal-account.cdb
 
 **Status:** Mantenido por compatibilidad pero reemplazado por los 3 archivos factorizados.
 
+**Warning:** No cargar este archivo junto con `custom_windows_overrides.xml` o `custom_linux_security_rules.xml`, porque contiene IDs duplicados de la estructura anterior.
+
 **Migración:** Ver `docs/CAMBIOS_FACTORIZACION_REGLAS.md` para detalles de la refactorización.
 
 ---
@@ -109,14 +114,16 @@ ls -lh /var/ossec/etc/lists/no-nominal-account.cdb
 
 | Métrica | Valor |
 |---------|-------|
-| **Total Reglas** | **98** |
+| **Total Reglas** | **101** |
 | **Windows Security** | 89 |
 | **Windows Overrides** | 5 |
-| **Linux Security** | 4 |
+| **Linux Security** | 7 |
 | **Event IDs únicos** | 73+ |
 | **MITRE Techniques** | 15+ |
 | **Rules Críticas (Level 15)** | 1 (Log Clearing) |
 | **CDB Lists** | 1 (no-nominal-account) |
+
+**Nota de validación:** Si se cuenta también `local_rules_override.xml`, el repositorio contiene 107 definiciones XML, pero solo 101 pertenecen a la arquitectura activa. Ejecutar `python3 ../scripts/validate_rules.py` antes de desplegar.
 
 ---
 
@@ -151,7 +158,7 @@ Agregar dentro de `<ossec_config>`:
   <!-- Custom Windows Overrides (5 rules) -->
   <rule_files>custom_windows_overrides.xml</rule_files>
   
-  <!-- Custom Linux Security Rules (4 rules) -->
+  <!-- Custom Linux Security Rules (7 rules) -->
   <rule_files>custom_linux_security_rules.xml</rule_files>
   
   <!-- CDB List for non-nominal accounts -->
@@ -200,7 +207,7 @@ Script de testing disponible en: `/scripts/test_all_rules.sh`
 | 60103, 100101 | Windows Overrides (críticos) | custom_windows_overrides.xml |
 | 100110-100112 | Windows Correlations | custom_windows_overrides.xml |
 | 100103 | Linux PAM root auth | custom_linux_security_rules.xml |
-| 200001-200003 | Linux non-nominal accounts | custom_linux_security_rules.xml |
+| 200001-200006 | Linux/Windows non-nominal accounts and correlations | custom_linux_security_rules.xml |
 
 **Nota:** IDs 100090-100091 fueron eliminados (duplicados Event 4724, ya cubierto por rule 60103)
 
@@ -222,7 +229,7 @@ Script de testing disponible en: `/scripts/test_all_rules.sh`
 
 2. **Rule 60103:** Esta regla sobrescribe comportamiento base de Wazuh. Si se elimina, Event 4724 volverá a nivel 0.
 
-3. **CDB Lists:** Sin la lista compilada, las reglas 200001-200003 **no funcionarán**. Verificar con `ls /var/ossec/etc/lists/*.cdb`.
+3. **CDB Lists:** Sin la lista compilada, las reglas 200001, 200002 y 200006 **no funcionarán** correctamente. Verificar con `ls /var/ossec/etc/lists/*.cdb`.
 
 4. **Dependencies:** Todas las reglas Windows dependen de `rule 60100` (Windows Security Base). Si esta regla no existe, las custom rules no se dispararán.
 
