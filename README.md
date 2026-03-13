@@ -662,13 +662,11 @@ Este proyecto está bajo la Licencia MIT - ver [LICENSE](LICENSE) para detalles.
 **Mateo Villablanca**
 - GitHub: [@mvillablanca](https://github.com/mvillablanca)
 
-## 🙏 Agradecimientos
 
+## 📚 Tecnologías Utilizadas
 - [Wazuh](https://wazuh.com/) - Plataforma SIEM open-source
 - [Microsoft Teams](https://www.microsoft.com/microsoft-teams/) - Plataforma de comunicación
 - [MITRE ATT&CK](https://attack.mitre.org/) - Framework de técnicas de atacantes
-
-## 📞 Soporte
 
 ---
 **⭐ Si este proyecto te fue útil, considera darle una estrella en GitHub**
