@@ -45,10 +45,13 @@ Complete step-by-step guide to install Wazuh custom rules and Teams integration 
 For experienced administrators who want to get up and running fast:
 
 ```bash
-# 1. Clone repository
+# 1. Clone repository (reemplaza YOUR_USERNAME con tu usuario de GitHub)
 cd /opt
 git clone https://github.com/YOUR_USERNAME/wazuh-custom-rules-teams.git
 cd wazuh-custom-rules-teams
+
+# Ejemplo:
+# git clone https://github.com/mateovillablanca/wazuh-custom-rules-teams.git
 
 # 2. Copy rules
 sudo cp rules/*.xml /var/ossec/etc/rules/

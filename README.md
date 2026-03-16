@@ -6,10 +6,19 @@
 [![Wazuh Version](https://img.shields.io/badge/Wazuh-4.x-blue)](https://wazuh.com/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey)](https://www.linux.org/)
 
+## Estado del Repositorio
+
+La estructura activa y mantenida está en `Wazuh-Rules-Teams/`.
+
+- Usa `Wazuh-Rules-Teams/` como fuente principal para reglas, scripts, listas y documentación.
+- Las carpetas de la raíz (`docs/`, `rules/`, `scripts/`, `integrations/`, `examples/`) son una versión anterior o reducida.
+- La guía rápida de navegación está en [STRUCTURE.md](STRUCTURE.md).
+- La carpeta vacía `Wazuh-Rules-Teams/Wazuh-Rules-Teams/` no contiene contenido operativo.
+
 ## 📋 Descripción
 
 Este proyecto proporciona una implementación completa de:
-- **67 reglas custom** para Windows Security Events (Kerberos, Process Execution, Account Management, LSASS, etc.)
+- **101 reglas custom** organizadas en una versión factorizada dentro de `Wazuh-Rules-Teams/`
 - **Integración inteligente con Microsoft Teams** usando Power Automate
 - **Sistema de resúmenes acumulativos** (envío cada 3 alertas o 24 horas)
 - **Alertas críticas inmediatas** (nivel ≥15)
@@ -17,16 +26,16 @@ Este proyecto proporciona una implementación completa de:
 
 ## 🎯 Características Principales
 
-### ✅ Reglas Custom (67 totales)
+### ✅ Reglas Custom (101 totales)
 
-- **Kerberos Authentication** (6 reglas): Detección de TGT, Service Tickets, ataques Kerberoasting
-- **Service Installation** (2 reglas): Detección de servicios sospechosos y persistencia
-- **Process Execution** (5 reglas): CMD, PowerShell, WScript, RegEdit, Net.exe
-- **Credential Access** (2 reglas): Acceso a LSASS, Mimikatz
-- **Account Management** (15 reglas): Creación, modificación, grupos privilegiados
-- **Password Operations** (4 reglas): Cambios de contraseña, resets
-- **Defense Evasion** (1 regla): Limpieza de logs (CRÍTICO)
-- **Linux PAM** (1 regla): Autenticación root
+- **Windows Security** (89 reglas): Autenticación, escalación, malware, red, integridad
+  - Autenticación y Acceso (200001-200020)
+  - Escalación de Privilegios (200021-200040)
+  - Detección de Malware/PUA (200041-200070)
+  - Detección de Red (200071-200090)
+  - Integridad de Sistema (200091-200100)
+- **Overrides/Correlación** (5 reglas): Personalización y reducción de falsos positivos
+- **Linux Security** (7 reglas): SSH, PAM, autenticación root, correlación cross-platform
 
 ### ✅ Integración Teams
 
@@ -59,11 +68,15 @@ Este proyecto proporciona una implementación completa de:
 ```bash
 # Conectar al servidor Wazuh
 ssh root@<WAZUH-SERVER-IP>
+# Ejemplo: ssh root@10.27.20.171
 
-# Copiar reglas custom
+# Copiar reglas custom (reemplaza <GITHUB-USERNAME> con tu usuario de GitHub)
 cd /var/ossec/etc/rules/
-wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/rules/custom_windows_security_rules.xml
-wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/rules/local_rules_override.xml
+wget https://raw.githubusercontent.com/<GITHUB-USERNAME>/wazuh-custom-rules-teams/main/rules/custom_windows_security_rules.xml
+wget https://raw.githubusercontent.com/<GITHUB-USERNAME>/wazuh-custom-rules-teams/main/rules/local_rules_override.xml
+
+# Ejemplo con usuario real:
+# wget https://raw.githubusercontent.com/mateovillablanca/wazuh-custom-rules-teams/main/rules/custom_windows_security_rules.xml
 
 # Verificar sintaxis
 /var/ossec/bin/wazuh-logtest -t
@@ -72,14 +85,16 @@ wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/mai
 ### Paso 2: Instalar Scripts de Integración
 
 ```bash
-# Copiar scripts
+# Copiar scripts (reemplaza <GITHUB-USERNAME> con tu usuario de GitHub)
 cd /var/ossec/integrations/
-wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/integrations/custom-teams-summary.py
-wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/integrations/custom-teams-summary
+wget https://raw.githubusercontent.com/<GITHUB-USERNAME>/wazuh-custom-rules-teams/main/integrations/custom-teams-summary.py
+
+# Ejemplo con usuario real:
+# wget https://raw.githubusercontent.com/mateovillablanca/wazuh-custom-rules-teams/main/integrations/custom-teams-summary.py
 
 # Dar permisos
-chmod +x custom-teams-summary.py custom-teams-summary
-chown root:wazuh custom-teams-summary.py custom-teams-summary
+chmod 750 custom-teams-summary.py
+chown root:wazuh custom-teams-summary.py
 ```
 
 ### Paso 3: Configurar Power Automate
@@ -119,62 +134,54 @@ systemctl status wazuh-manager
 ### Paso 5: Probar
 
 ```bash
-# Descargar script de prueba
+# Descargar script de prueba (reemplaza <GITHUB-USERNAME> con tu usuario)
 cd /tmp
-wget https://raw.githubusercontent.com/<TU-USUARIO>/wazuh-custom-rules-teams/main/scripts/test_alerts.sh
+wget https://raw.githubusercontent.com/<GITHUB-USERNAME>/wazuh-custom-rules-teams/main/scripts/test_alerts.sh
 chmod +x test_alerts.sh
 
-# Ejecutar (generará 17 alertas de prueba)
+# Ejemplo:
+# wget https://raw.githubusercontent.com/mateovillablanca/wazuh-custom-rules-teams/main/scripts/test_alerts.sh
+
+# Ejecutar (generará alertas de prueba)
 ./test_alerts.sh
 ```
 
 ## 📁 Estructura del Proyecto
 
-```
+```text
 wazuh-custom-rules-teams/
-├── README.md                          # Este archivo
-├── LICENSE                            # Licencia MIT
-├── .gitignore                         # Archivos excluidos
-│
-├── rules/                             # Reglas de detección
-│   ├── custom_windows_security_rules.xml    # 62 reglas custom
-│   ├── local_rules_override.xml             # 5 reglas override
-│   └── README.md                            # Documentación de reglas
-│
-├── integrations/                      # Scripts de integración
-│   ├── custom-teams-summary.py              # Script principal Python
-│   ├── custom-teams-summary                 # Wrapper bash
-│   ├── custom-teams.py                      # Script alternativo
-│   └── README.md                            # Documentación integración
-│
-├── scripts/                           # Utilidades y testing
-│   ├── test_alerts.sh                       # Prueba 17 alertas
-│   ├── test_all_rules.sh                    # Prueba 35+ alertas
-│   ├── migration.sh                         # Script de migración
-│   └── README.md                            # Guía de scripts
-│
-├── docs/                              # Documentación completa
-│   ├── INSTALLATION.md                      # Guía de instalación detallada
-│   ├── MIGRATION.md                         # Migración entre servidores
-│   ├── RULES_REFERENCE.md                   # Referencia completa de reglas
-│   ├── TEAMS_SETUP.md                       # Configuración de Teams
-│   ├── TROUBLESHOOTING.md                   # Solución de problemas
-│   ├── CONTEXTO_WAZUH.md                    # Contexto completo Wazuh
-│   └── MANUAL_CONFIGURACION.md              # Manual técnico completo
-│
-└── examples/                          # Ejemplos de configuración
-    ├── ossec.conf.example                   # Configuración ossec.conf
-    ├── power_automate_flow.json             # Flujo de Power Automate
-    └── adaptive_card_template.json          # Template de Adaptive Card
+|-- README.md
+|-- STRUCTURE.md
+|-- docs/                      # Documentación legacy o resumida
+|-- examples/                  # Ejemplos legacy o resumidos
+|-- integrations/              # Integración legacy o resumida
+|-- rules/                     # Reglas legacy o resumidas
+|-- scripts/                   # Scripts legacy o resumidos
+`-- Wazuh-Rules-Teams/         # Proyecto canónico y mantenido
+  |-- README.md
+  |-- docs/                  # Documentación operativa actual
+  |-- examples/              # Configuración ejemplo actual
+  |-- integrations/          # Código de integración actual
+  |-- lists/                 # CDB lists activas
+  |-- rules/                 # Reglas XML activas
+  |-- scripts/               # Testing y simulación actuales
+  `-- Wazuh-Rules-Teams/     # Carpeta vacía, ignorar
 ```
+
+### Flujo recomendado
+
+1. Lee `Wazuh-Rules-Teams/README.md`.
+2. Usa `Wazuh-Rules-Teams/docs/` para instalación y operación.
+3. Edita reglas en `Wazuh-Rules-Teams/rules/`.
+4. Ejecuta pruebas desde `Wazuh-Rules-Teams/scripts/`.
 
 ## 📖 Documentación
 
-- **[Instalación Completa](docs/INSTALLATION.md)**: Guía paso a paso desde cero
-- **[Migración](docs/MIGRATION.md)**: Mover configuración entre servidores
-- **[Referencia de Reglas](docs/RULES_REFERENCE.md)**: Detalle de las 67 reglas
-- **[Configuración Teams](docs/TEAMS_SETUP.md)**: Setup completo de Power Automate
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)**: Problemas comunes y soluciones
+- **[Mapa del repositorio](STRUCTURE.md)**: Qué carpeta usar y cuál ignorar
+- **[Proyecto activo](Wazuh-Rules-Teams/README.md)**: Punto de entrada principal
+- **[Docs activas](Wazuh-Rules-Teams/docs/README.md)**: Índice de documentación vigente
+- **[Instalación activa](Wazuh-Rules-Teams/docs/INSTALLATION.md)**: Guía operativa actual
+- **[Migración activa](Wazuh-Rules-Teams/docs/MIGRATION.md)**: Procedimiento de migración vigente
 
 ## 🔍 Reglas Destacadas
 
@@ -357,7 +364,7 @@ pickle.dump(cache, open('/var/ossec/logs/teams_alerts_cache.pkl', 'wb'))
 EOF
 ```
 
-Ver [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para más problemas comunes.
+Ver [Wazuh-Rules-Teams/docs/README.md](Wazuh-Rules-Teams/docs/README.md) para la guía actual de documentación y resolución de problemas.
 
 ## 🤝 Contribuir
 

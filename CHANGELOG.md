@@ -5,24 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-03-11
+## [1.0.0] - 2026-03-16
 
 ### Added
 
 #### Rules
-- **62 Custom Windows Security Rules** (`custom_windows_security_rules.xml`)
-  - 6 Kerberos authentication rules (100001-100006)
-  - 2 Service installation rules (100007-100008)
-  - 5 Process creation rules (100009-100013)
-  - 2 LSASS access rules (100014-100015)
-  - 23 Account management rules (100016-100038)
-  - 4 Password/policy change rules (100039-100042)
-  - 5 Application activity rules (100043-100047)
-  - 2 Event log tampering rules (100048-100049)
-  - 1 PAM authentication rule (100050)
-  - 12 Additional audit rules (100051-100062)
+- **89 Custom Windows Security Rules** (`custom_windows_security_rules.xml`)
+  - Kerberos authentication rules (200001-200010)
+  - Privilege escalation rules (200021-200040)
+  - Malware/PUA detection rules (200041-200070)
+  - Network detection rules (200071-200090)
+  - File system integrity rules (200091-200100)
 
-- **5 Override Rules** (`local_rules_override.xml`)
+- **5 Override Rules** (`custom_windows_overrides.xml`)
   - Rule 60103: Increased severity from level 0 to level 8
   - Rules 100070-100072: Password change variants
   - Rule 100101: Event log clearing raised to level 15 (critical)
@@ -46,8 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Expected result: 2 immediate alerts + 1 summary
 
 - **Comprehensive Test Script** (`scripts/test_all_rules.sh`)
-  - Tests all 67 custom rules in 10 phases
-  - Complete validation of entire ruleset
+  - Tests all 101 custom rules in 10 phases
+  - Complete validation of entire ruleset (Windows 89 + Overrides 5 + Linux 7)
   - Execution time: ~5 minutes
   - Expected result: 2 immediate alerts + multiple summaries
 
