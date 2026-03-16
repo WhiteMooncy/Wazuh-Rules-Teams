@@ -1,8 +1,21 @@
-# Wazuh Custom Rules
+# Wazuh Custom Rules (LEGACY DOCUMENTATION)
 
-This directory contains the custom Wazuh rules for Windows Security event detection.
+⚠️ **NOTE:** This directory contains an incomplete version of the custom rules. 
 
-## Files
+## Current Version Location
+
+For the **complete and up-to-date** set of 101 custom rules (89 Windows + 5 Overrides + 7 Linux), please refer to:
+- 📂 **`/Wazuh-Rules-Teams/rules/`** - Complete rule set with full documentation
+
+## This Directory
+
+This directory contains legacy rule files:
+- **custom_windows_security_rules.xml**: 62 Windows Security rules (partial set)
+- **local_rules_override.xml**: 5 override rules
+
+**RECOMMENDATION:** Use the canonical rules from `/Wazuh-Rules-Teams/rules/` for production deployments.
+
+## Legacy Files
 
 ### custom_windows_security_rules.xml
 Contains 62 custom rules organized in the following categories:

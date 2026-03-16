@@ -226,7 +226,7 @@ sudo chmod 640 /var/ossec/etc/rules/local_rules_override.xml
 
 ```bash
 sudo grep -c "rule id=\"100" /var/ossec/etc/rules/custom_windows_security_rules.xml
-# Should output: 62
+# Should output: 89
 
 sudo grep -c "rule id" /var/ossec/etc/rules/local_rules_override.xml
 # Should output: 5
@@ -427,7 +427,7 @@ On each agent, update `<address>` in ossec.conf and restart.
 - [ ] **Rules loaded:**
   ```bash
   sudo grep -c "rule id=\"100" /var/ossec/etc/rules/*.xml
-  # Should show: 67
+  # Should show: 101
   ```
 
 - [ ] **Integration script executable:**

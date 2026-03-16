@@ -161,7 +161,7 @@ sudo /var/ossec/bin/wazuh-logtest < /dev/null
 
 # Verify rules were loaded
 sudo grep -c "rule id=\"100" /var/ossec/etc/rules/custom_windows_security_rules.xml
-# Should output: 62
+# Should output: 89
 
 sudo grep -c "rule id" /var/ossec/etc/rules/local_rules_override.xml
 # Should output: 5
@@ -392,7 +392,7 @@ To change:
 
 ```bash
 sudo grep "rule id=\"100" /var/ossec/etc/rules/*.xml | wc -l
-# Should show: 67 (62 custom + 5 override)
+# Should show: 101 (89 custom + 5 override + 7 linux)
 ```
 
 ### Check Integration is Active
