@@ -885,5 +885,3 @@ Evento → Agente → Manager → Analiza → ¿Malo? → Teams → Acción
 ```
 Detectan tipos de ataque → Niveles automáticos → Teams notifica
 ```
-
-**¿Preguntas?** Lee la sección específica arriba. Todo está explicado.

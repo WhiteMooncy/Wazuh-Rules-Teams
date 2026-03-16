@@ -276,7 +276,7 @@ sudo tail -50 /var/ossec/logs/ossec.log | grep -i error
 
 ```bash
 # Generate a test alert
-echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%S+0000)'","rule":{"level":12,"description":"Test Alert - Installation Verification","id":"100001"},"agent":{"id":"000","name":"Test-Agent"},"location":"test","data":{"win":{"system":{"eventID":"4768″,"computer":"TestServer"}}}}' | \
+echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%S+0000)'","rule":{"level":12,"description":"Test Alert - Installation Verification","id":"100001"},"agent":{"id":"000","name":"Test-Agent"},"location":"test","data":{"win":{"system":{"eventID":"4768","computer":"TestServer"}}}}' | \
 sudo /var/ossec/integrations/custom-teams-summary.py \
   "$(sudo grep hook_url /var/ossec/etc/ossec.conf | grep -oP '(?<=<hook_url>).*(?=</hook_url>)')" \
   11 \
