@@ -9,7 +9,7 @@ This guide covers migrating from:
 - **New Server:** 10.0.0.20 (or your target server)
 
 **Migration Components:**
-- 67 custom Windows Security rules
+- 101 custom Wazuh rules (89 Windows + 5 Overrides + 7 Linux)
 - Teams integration with summary accumulation
 - Agent configurations
 - Alert cache (optional)

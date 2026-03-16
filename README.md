@@ -379,7 +379,7 @@ Las contribuciones son bienvenidas. Por favor:
 ## 📝 Changelog
 
 ### v1.0.0 (2026-03-11)
-- ✅ Implementación inicial de 67 reglas custom
+- ✅ Implementación inicial de 101 reglas custom (89 Windows + 5 Overrides + 7 Linux)
 - ✅ Integración con Microsoft Teams
 - ✅ Sistema de resúmenes acumulativos
 - ✅ Alertas críticas inmediatas

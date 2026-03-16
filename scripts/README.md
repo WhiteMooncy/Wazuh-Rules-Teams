@@ -33,7 +33,7 @@ sudo bash test_alerts.sh
 ---
 
 ### test_all_rules.sh
-Comprehensive test of all 67 custom rules in 10 phases.
+Comprehensive test of all 101 custom rules in 10 phases.
 
 **Purpose:** Complete validation of entire ruleset for auditing or documentation.
 
@@ -250,7 +250,7 @@ sudo bash test_alerts.sh
 ### Example 2: Complete Rule Validation
 
 ```bash
-# Test all 67 rules with your webhook
+# Test all 101 rules with your webhook
 sudo bash test_all_rules.sh "https://your-webhook-url.com/..."
 
 # Monitor in real-time
@@ -441,7 +441,7 @@ git push origin main
 - CPU: <1% on 4-core system
 - Network: 3-5 requests (2 immediate + 1 summary)
 
-**test_all_rules.sh** (67 rules):
+**test_all_rules.sh** (101 rules):
 - Duration: ~5 minutes
 - Memory: <10 MB
 - CPU: <2% on 4-core system

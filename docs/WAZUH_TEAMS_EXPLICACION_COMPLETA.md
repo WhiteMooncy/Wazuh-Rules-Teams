@@ -107,7 +107,7 @@ Ahora WAZUH entiende cada parte del evento.
 
 #### 3B: COMPARAR CON REGLAS (¿Esto ya es peligroso?)
 
-Tu proyecto tiene **67 reglas personalizadas** que dicen:
+Tu proyecto tiene **101 reglas personalizadas** que dicen:
 
 ```
 REGLA EJEMPLO:
@@ -140,7 +140,7 @@ Con el evento de ejemplo:
    └─ ACTUALIZAR ALERTA ✓
 ```
 
-**Las 67 reglas detectan tipos de ataque:**
+**Las 101 reglas detectan tipos de ataque:**
 
 | Regla | Detecta | Nivel |
 |-------|---------|-------|
@@ -405,7 +405,7 @@ DECODER: Extrae
   ├─ IP: 203.45.67.89
   └─ Timestamp: 14:30
 
-RULE MATCHING: Compara contra 67 reglas
+RULE MATCHING: Compara contra 101 reglas
   ├─ Regla 1: "Failed login" → MATCH (level 3)
   ├─ Regla 2: "Malware detection" → NO match
   ├─ Regla 3: "Policy change" → NO match
@@ -881,7 +881,7 @@ SI alguna está ☐:
 Evento → Agente → Manager → Analiza → ¿Malo? → Teams → Acción
 ```
 
-**Tus 67 reglas hacen:**
+**Tus 101 reglas hacen:**
 ```
 Detectan tipos de ataque → Niveles automáticos → Teams notifica
 ```

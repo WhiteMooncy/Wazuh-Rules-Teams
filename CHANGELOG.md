@@ -69,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Performance optimization
 
 - **Rules Reference** (planned for `docs/RULES_REFERENCE.md`)
-  - Complete documentation of all 67 rules
+- **Complete documentation of all 101 rules**
   - Event ID mappings
   - MITRE ATT&CK technique coverage
   - Compliance framework tags
@@ -92,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Project Files
 - **Main README** (`README.md`)
   - Project description and badges
-  - Features overview with 67 rules breakdown
+  - Features overview with 101 rules breakdown
   - Impact metrics (80% alert reduction)
   - 5-step quick installation
   - Complete file structure
@@ -222,7 +222,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Description |
 |---------|------|-------------|
-| 1.0.0 | 2025-03-11 | Initial release with 67 rules, Teams integration, complete documentation |
+| 1.0.0 | 2026-03-16 | Initial release with 101 rules, Teams integration, complete documentation |
 
 ---
 

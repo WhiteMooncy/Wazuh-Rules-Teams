@@ -559,7 +559,7 @@ sudo sed -i '1i #!/usr/bin/python3' /var/ossec/integrations/custom-teams-summary
 - **Configure Windows agents**: See [Windows Agent Setup Guide](WINDOWS_AGENT.md)
 - **Migrate to another server**: See [Migration Guide](MIGRATION.md)
 - **Customize rules**: See [Rules Reference](RULES_REFERENCE.md)
-- **Review all 67 rules**: See [Complete Rule Documentation](RULES_REFERENCE.md)
+- **Review all 101 rules**: See [Complete Rule Documentation](RULES_REFERENCE.md)
 
 ---
 
@@ -571,4 +571,4 @@ sudo sed -i '1i #!/usr/bin/python3' /var/ossec/integrations/custom-teams-summary
 
 ---
 
-**Installation complete!** You now have 67 custom Wazuh rules with intelligent Teams integration.
+**Installation complete!** You now have 101 custom Wazuh rules with intelligent Teams integration.
