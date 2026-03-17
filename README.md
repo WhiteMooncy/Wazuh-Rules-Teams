@@ -6,53 +6,55 @@
 [![Wazuh Version](https://img.shields.io/badge/Wazuh-4.x-blue)](https://wazuh.com/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey)](https://www.linux.org/)
 
-## Estado del Repositorio
+## Estado del Proyecto
 
-La estructura activa y mantenida está en `Wazuh-Rules-Teams/`.
-
-- Usa `Wazuh-Rules-Teams/` como fuente principal para reglas, scripts, listas y documentación.
-- Las carpetas de la raíz (`docs/`, `rules/`, `scripts/`, `integrations/`, `examples/`) son una versión anterior o reducida.
-- La guía rápida de navegación está en [STRUCTURE.md](STRUCTURE.md).
-- La carpeta vacía `Wazuh-Rules-Teams/Wazuh-Rules-Teams/` no contiene contenido operativo.
+**Versión en Producción:** Script de integración Teams simple y funcional
+- **Ubicación Remota:** `/root/wazuh-teams/custom-teams.py` (en máquina 10.27.20.171)
+- **Estado:** Operativo y probado en ambiente productivo
+- **Procesamiento:** Real-time, alerta por alerta
+- **Nota:** Este repositorio contiene versiones mejoradas del script base no aún desplegadas
 
 ## 📋 Descripción
 
-Este proyecto proporciona una implementación completa de:
-- **101 reglas custom** organizadas en una versión factorizada dentro de `Wazuh-Rules-Teams/`
-- **Integración inteligente con Microsoft Teams** usando Power Automate
-- **Sistema de resúmenes acumulativos** (envío cada 3 alertas o 24 horas)
-- **Alertas críticas inmediatas** (nivel ≥15)
-- **Reducción de ruido del 80%** (de ~40 alertas/día a ~5-8)
+La integración actual proporciona:
+- **Script de integración Microsoft Teams** funcional y estable
+- **Procesamiento individual de alertas** con envío inmediato
+- **Tarjetas Adaptive Card** con formato enriquecido
+- **Links dinámicos al Dashboard Wazuh** para cada alerta
+- **Validación de integridad** de alertas y webhooks
 
-## 🎯 Características Principales
+## 🎯 Características Implementadas
 
-### ✅ Reglas Custom (101 totales)
+### ✅ Integración Teams (Versión Actual)
 
-- **Windows Security** (89 reglas): Autenticación, escalación, malware, red, integridad
-  - Autenticación y Acceso (200001-200020)
-  - Escalación de Privilegios (200021-200040)
-  - Detección de Malware/PUA (200041-200070)
-  - Detección de Red (200071-200090)
-  - Integridad de Sistema (200091-200100)
-- **Overrides/Correlación** (5 reglas): Personalización y reducción de falsos positivos
-- **Linux Security** (7 reglas): SSH, PAM, autenticación root, correlación cross-platform
+- **Procesamiento Real-time**: Cada alerta se envía inmediatamente a Teams
+- **Adaptive Cards**: Tarjetas formateadas con niveles de severidad
+- **Dashboard Integration**: Enlaces directos al Wazuh Dashboard (192.168.30.2)
+- **VirusTotal Integration**: Incluye links si están disponibles en los datos
+- **Logging**: Registro a `/var/ossec/logs/integrations.log`
+- **Validación**: Verifica webhook URL y formato de alertas
 
-### ✅ Integración Teams
+### 📝 Campos en Cada Alerta
 
-- **Resúmenes inteligentes**: Acumulación de alertas con estadísticas
-- **Alertas críticas**: Envío inmediato para nivel ≥15
-- **Adaptive Cards**: Formato rico con MITRE ATT&CK, agentes, niveles
-- **Dashboard links**: Botones directos al Wazuh Dashboard
-- **Sin emojis**: Compatibilidad total con webhooks corporativos
+- Nivel y Prioridad (CRITICAL/HIGH/MEDIUM/LOW)
+- ID de Regla y Descripción
+- Grupos de Detección
+- Agente (nombre e IP)
+- Timestamp de la Alerta
+- Alert ID único
+- VirusTotal permalink (si aplica)
+- Full Log con truncamiento automático
 
-## 📊 Impacto
+## 📊 Implementación
 
-| Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
-| Alertas/día | ~40 | ~5-8 | **80% reducción** |
-| Nivel mínimo | 9 | 11 | Menos ruido |
-| Formato | Individual | Resúmenes | Menos interrupciones |
-| Críticas | Mezcladas | Inmediatas | Mejor respuesta |
+| Aspecto | Estado |
+|--------|--------|
+| Procesamiento | Real-time individual |
+| Caché | Ninguno (sin acumulación) |
+| Retry logic | Básico (timeout 30s) |
+| Logging | Sí, archivo + stdout |
+| Dashboard | Sí, links dinámicos |
+| VirusTotal | Sí, si disponible |
 
 ## 🚀 Instalación Rápida
 
@@ -60,64 +62,38 @@ Este proyecto proporciona una implementación completa de:
 
 - Wazuh Manager 4.x instalado
 - Acceso root al servidor
-- Cuenta de Microsoft Teams
-- Power Automate (incluido en Microsoft 365)
+- Cuenta de Microsoft Teams con Power Automate
+- Webhook URL de Power Automate
 
-### Paso 1: Copiar Reglas
+### Paso 1: Descargar e Instalar Script de Integración
 
 ```bash
 # Conectar al servidor Wazuh
 ssh root@<WAZUH-SERVER-IP>
 # Ejemplo: ssh root@10.27.20.171
 
-# Copiar reglas custom (reemplaza <GITHUB-USERNAME> con tu usuario de GitHub)
-cd /var/ossec/etc/rules/
-wget https://raw.githubusercontent.com/<GITHUB-USERNAME>/wazuh-custom-rules-teams/main/rules/custom_windows_security_rules.xml
-wget https://raw.githubusercontent.com/<GITHUB-USERNAME>/wazuh-custom-rules-teams/main/rules/local_rules_override.xml
-
-# Ejemplo con usuario real:
-# wget https://raw.githubusercontent.com/mateovillablanca/wazuh-custom-rules-teams/main/rules/custom_windows_security_rules.xml
-
-# Verificar sintaxis
-/var/ossec/bin/wazuh-logtest -t
-```
-
-### Paso 2: Instalar Scripts de Integración
-
-```bash
-# Copiar scripts (reemplaza <GITHUB-USERNAME> con tu usuario de GitHub)
+# Copiar el script de integración
 cd /var/ossec/integrations/
-wget https://raw.githubusercontent.com/<GITHUB-USERNAME>/wazuh-custom-rules-teams/main/integrations/custom-teams-summary.py
-
-# Ejemplo con usuario real:
-# wget https://raw.githubusercontent.com/mateovillablanca/wazuh-custom-rules-teams/main/integrations/custom-teams-summary.py
+wget https://raw.githubusercontent.com/mateovillablanca/wazuh-custom-rules-teams/main/integrations/custom-teams-summary.py
 
 # Dar permisos
 chmod 750 custom-teams-summary.py
 chown root:wazuh custom-teams-summary.py
 ```
 
-### Paso 3: Configurar Power Automate
-
-1. Ve a [Power Automate](https://make.powerautomate.com)
-2. **Crear flujo** → **Flujo de nube automatizado**
-3. Trigger: **"Cuando se recibe una solicitud HTTP"**
-4. Acción: **"Publicar mensaje en un chat o canal"** (Teams)
-5. Copiar la **URL HTTP POST**
-
-### Paso 4: Configurar Wazuh
+### Paso 2: Configurar Webhook en Wazuh
 
 ```bash
 # Editar ossec.conf
 nano /var/ossec/etc/ossec.conf
 
-# Agregar al final (antes de </ossec_config>):
+# Agregar esta integración (antes de </ossec_config>):
 ```
 
 ```xml
 <integration>
   <name>custom-teams-summary</name>
-  <hook_url>TU-WEBHOOK-URL-AQUI</hook_url>
+  <hook_url>https://prod-XX.logic.azure.com/workflows/...</hook_url>
   <level>11</level>
   <alert_format>json</alert_format>
 </integration>
@@ -131,57 +107,34 @@ systemctl restart wazuh-manager
 systemctl status wazuh-manager
 ```
 
-### Paso 5: Probar
+### Paso 3: Probar la Integración
 
 ```bash
-# Descargar script de prueba (reemplaza <GITHUB-USERNAME> con tu usuario)
-cd /tmp
-wget https://raw.githubusercontent.com/<GITHUB-USERNAME>/wazuh-custom-rules-teams/main/scripts/test_alerts.sh
-chmod +x test_alerts.sh
-
-# Ejemplo:
-# wget https://raw.githubusercontent.com/mateovillablanca/wazuh-custom-rules-teams/main/scripts/test_alerts.sh
-
-# Ejecutar (generará alertas de prueba)
-./test_alerts.sh
+# Generar una alerta de prueba
+# Las alertas se enviarán automáticamente a Teams según la configuración de nivel
 ```
 
 ## 📁 Estructura del Proyecto
 
 ```text
 wazuh-custom-rules-teams/
-|-- README.md
-|-- STRUCTURE.md
-|-- docs/                      # Documentación legacy o resumida
-|-- examples/                  # Ejemplos legacy o resumidos
-|-- integrations/              # Integración legacy o resumida
-|-- rules/                     # Reglas legacy o resumidas
-|-- scripts/                   # Scripts legacy o resumidos
-`-- Wazuh-Rules-Teams/         # Proyecto canónico y mantenido
-  |-- README.md
-  |-- docs/                  # Documentación operativa actual
-  |-- examples/              # Configuración ejemplo actual
-  |-- integrations/          # Código de integración actual
-  |-- lists/                 # CDB lists activas
-  |-- rules/                 # Reglas XML activas
-  |-- scripts/               # Testing y simulación actuales
-  `-- Wazuh-Rules-Teams/     # Carpeta vacía, ignorar
+├── README.md                   # Este archivo
+├── CHANGELOG.md               # Historial de cambios
+├── STRUCTURE.md               # Mapa de navegación
+├── LICENSE                    # MIT License
+├── integrations/
+│   ├── custom-teams-summary.py    # Script de integración actual (v4.1)
+│   └── custom-teams-summary-FIXED.py # Versión mejorada (experimental)
+├── docs/                      # Documentación adicional
+│   ├── INSTALLATION.md        # Guía de instalación
+│   ├── COMPARATIVO_ANTES_DESPUES.md
+│   └── otros archivos...
+├── examples/                  # Ejemplos de configuración
+├── rules/                     # Referencia histórica
+└── scripts/                   # Scripts de prueba y utilidades
 ```
 
-### Flujo recomendado
-
-1. Lee `Wazuh-Rules-Teams/README.md`.
-2. Usa `Wazuh-Rules-Teams/docs/` para instalación y operación.
-3. Edita reglas en `Wazuh-Rules-Teams/rules/`.
-4. Ejecuta pruebas desde `Wazuh-Rules-Teams/scripts/`.
-
-## 📖 Documentación
-
-- **[Mapa del repositorio](STRUCTURE.md)**: Qué carpeta usar y cuál ignorar
-- **[Proyecto activo](Wazuh-Rules-Teams/README.md)**: Punto de entrada principal
-- **[Docs activas](Wazuh-Rules-Teams/docs/README.md)**: Índice de documentación vigente
-- **[Instalación activa](Wazuh-Rules-Teams/docs/INSTALLATION.md)**: Guía operativa actual
-- **[Migración activa](Wazuh-Rules-Teams/docs/MIGRATION.md)**: Procedimiento de migración vigente
+**Nota:** La versión productiva (`custom-teams.py`) está simplificada. Las versiones mejoradas con acumulación de alertas y retry logic están en desarrollo pero no desplegadas aún.
 
 ## 🔍 Reglas Destacadas
 
@@ -235,98 +188,64 @@ wazuh-custom-rules-teams/
 </rule>
 ```
 
-## 🎨 Ejemplos de Alertas en Teams
+## 🔄 Flujo de la Integración
 
-### Resumen Acumulado (Cada 3 alertas o 24h)
+1. **Wazuh detecta alerta** → Alert level ≥ 11 (configurable)
+2. **Ejecuta integración** → Script `custom-teams-summary.py`
+3. **Valida alerta** → Verifica formato JSON y estructura
+4. **Construye tarjeta** → Formato Adaptive Card
+5. **Envía a Teams** → POST a webhook URL
+6. **Logging** → Registra resultado en `/var/ossec/logs/integrations.log`
 
-```
-[MUY ALTO] Resumen de Alertas Wazuh - 24h
-
-Total de Alertas: 5
-Periodo: 24h
-Nivel Máximo: 13
-Agentes Afectados: 2
-
-Distribución por Nivel:
-  Nivel 13: 2 alertas
-  Nivel 12: 1 alertas
-  Nivel 9: 1 alertas
-
-Top 5 Reglas Activadas:
-  1. Rule 100006 (1×): Kerberos autenticación fallida - cuenta expirada
-  2. Rule 100008 (1×): Servicio sospechoso instalado
-  3. Rule 100035 (1×): Acceso a proceso LSASS
-  4. Rule 100007 (1×): Servicio nuevo instalado
-  5. Rule 5502 (1×): PAM: Login session closed
-
-Top MITRE ATT&CK:
-  • T1558 (Steal or Forge Kerberos Tickets)
-  • T1543.003 (Create or Modify System Process)
-  • T1003.001 (LSASS Memory)
-
-[Ver Dashboard] [Descartar]
-```
-
-### Alerta Crítica Inmediata (Nivel ≥15)
+## 📊 Ejemplo de Alerta en Teams
 
 ```
-[CRITICO] ALERTA CRÍTICA WAZUH
-
-ID de Regla: 100101
-Nivel: 15
-Descripción: Log de seguridad limpiado | Security log cleared
-Agente: DC01
-Timestamp: 2026-03-11 14:30:45
-
-Técnicas MITRE ATT&CK:
-  • T1070.001: Clear Windows Event Logs
-
-Usuario: administrator
-IP de Origen: 192.168.1.100
-Log: EventChannel
-
-[Ver en Dashboard] [Investigar]
+┌─────────────────────────────────────────────┐
+│ ⚠ HIGH WAZUH ALERT                         │
+├─────────────────────────────────────────────┤
+│ Level:       HIGH (11)                      │
+│ Rule ID:     100006                         │
+│ Description: Kerberos authentication failed│
+│ Groups:      authentication, account_change│
+│ Agent:       DC01 (192.168.1.10)            │
+│ Timestamp:   2026-03-17 14:30:45           │
+│ Alert ID:    1710691445.123456             │
+│ VirusTotal:  [link] (si aplica)            │
+│                                             │
+│ Full Log:                                   │
+│ Event ID: 4771                              │
+│ Account Name: testuser@contoso.com          │
+│ Failure Code: 0x18                          │
+│                                             │
+│ [📊 Dashboard] [🔗 VirusTotal]             │
+└─────────────────────────────────────────────┘
 ```
 
-## 🔧 Configuración Avanzada
+## 🎛️ Configuración del Script
 
-### Ajustar Umbral de Resúmenes
+El script de integración ubicado en `/var/ossec/integrations/custom-teams-summary.py` incluye:
 
-Edita `/var/ossec/integrations/custom-teams-summary.py`:
+**Constantes Configurables:**
+- `LOG_FILE`: Ubicación del log de integración
+- `DASHBOARD_BASE`: URL base del Dashboard Wazuh (actualmente: `https://192.168.30.2`)
+- `USER_AGENT`: Identificador de la integración
 
-```python
-# Línea ~15
-MAX_ALERTS_BEFORE_SUMMARY = 3  # Cambiar a 5, 10, etc.
-SUMMARY_INTERVAL_HOURS = 24    # Cambiar a 12, 48, etc.
-CRITICAL_LEVEL = 15            # Nivel para envío inmediato
-```
+**Validaciones:**
+- Verifica que el archivo de alerta exista y tenga extensión `.alert`
+- Valida que el webhook sea de un proveedor permitido (Power Automate, Azure Logic Apps)
+- Filtra alertas por nivel mínimo
 
-### Cambiar Nivel Mínimo
-
-Edita `/var/ossec/etc/ossec.conf`:
-
-```xml
-<integration>
-  <level>11</level>  <!-- Cambiar a 10, 12, etc. -->
-</integration>
-```
-
-### Filtrar por Reglas Específicas
-
-```xml
-<integration>
-  <name>custom-teams-summary</name>
-  <hook_url>...</hook_url>
-  <level>11</level>
-  <rule_id>100001,100036,100101</rule_id>  <!-- Solo estas reglas -->
-</integration>
-```
+**Procesamiento:**
+- Formatea timestamps a ISO format con timezone
+- Asigna colores según severidad (CRITICAL -> rojo, HIGH -> naranja, etc.)
+- Trunca logs largos automáticamente
+- Incluye botones para acceder al Dashboard y VirusTotal (si aplica)
 
 ## 🐛 Troubleshooting
 
 ### Problema: Webhook retorna 404
 
-**Causa**: URL expirada o flujo deshabilitado en Power Automate
+**Causa**: URL expirada o flujo deshabilitado en Power Automate  
 
 **Solución**:
 1. Verifica que el flujo esté **activado** en Power Automate
@@ -341,50 +260,48 @@ Edita `/var/ossec/etc/ossec.conf`:
 # Ver logs de integración
 tail -50 /var/ossec/logs/integrations.log
 
-# Ver alertas generadas
-tail -50 /var/ossec/logs/alerts/alerts.json | jq 'select(.rule.level >= 11)'
+# Ver alertas generadas en el sistema
+tail -50 /var/ossec/logs/alerts/alerts.json | jq '.[] | select(.rule.level >= 11)'
 
-# Probar manualmente
-tail -1 /var/ossec/logs/alerts/alerts.json | \
-  /var/ossec/integrations/custom-teams-summary "TU-WEBHOOK-URL"
-```
-
-### Problema: Muchas alertas acumuladas
-
-**Solución temporal**:
-```bash
-# Limpiar caché
-rm /var/ossec/logs/teams_alerts_cache.pkl
-
-# O forzar envío
+# Probar la integración manualmente
 python3 << 'EOF'
-import pickle
-cache = {'alerts': [], 'last_summary_time': None, 'summary_count': 0}
-pickle.dump(cache, open('/var/ossec/logs/teams_alerts_cache.pkl', 'wb'))
+import json
+from /var/ossec/integrations/custom-teams-summary import Integration
+
+alert = {"rule": {"level": 11, "id": "100006"}, "agent": {"name": "test"}}
+webhook = "TU-WEBHOOK-URL"
+Integration("test.alert", webhook, 11).run()
 EOF
 ```
 
-Ver [Wazuh-Rules-Teams/docs/README.md](Wazuh-Rules-Teams/docs/README.md) para la guía actual de documentación y resolución de problemas.
+### Problema: Script genera error 403
 
-## 🤝 Contribuir
+**Causa**: Webhook URL bloqueado o credenciales inválidas
 
-Las contribuciones son bienvenidas. Por favor:
+**Solución**:
+```bash
+# Verificar permisos del archivo
+ls -l /var/ossec/integrations/custom-teams-summary.py
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+# Verificar que el usuario wazuh tiene permisos
+chown root:wazuh /var/ossec/integrations/custom-teams-summary.py
+chmod 750 /var/ossec/integrations/custom-teams-summary.py
+
+# Reiniciar el servicio
+systemctl restart wazuh-manager
+```
+
+Para más ayuda, consultar logs en `/var/ossec/logs/integrations.log`
 
 ## 📝 Changelog
 
-### v1.0.0 (2026-03-11)
-- ✅ Implementación inicial de 101 reglas custom (89 Windows + 5 Overrides + 7 Linux)
-- ✅ Integración con Microsoft Teams
-- ✅ Sistema de resúmenes acumulativos
-- ✅ Alertas críticas inmediatas
-- ✅ Documentación completa
-- ✅ Scripts de testing y migración
+### v4.1 (2026-03-09)
+- ✅ Script de integración Teams simplificado y estable
+- ✅ Procesamiento real-time de alertas
+- ✅ Adaptive Card formatting con Dashboard links
+- ✅ Validación de integridad de alertas
+- ✅ Logging a archivo y stdout
+- ✅ VirusTotal integration cuando aplica
 
 ## 📄 Licencia
 
@@ -395,7 +312,7 @@ Este proyecto está bajo la Licencia MIT - ver [LICENSE](LICENSE) para detalles.
 **Mateo Villablanca**
 - GitHub: [@mvillablanca](https://github.com/WhiteMooncy)
 
-## 🙏 Agradecimientos
+## Herramientas Utilizadas
 
 - [Wazuh](https://wazuh.com/) - Plataforma SIEM open-source
 - [Microsoft Teams](https://www.microsoft.com/microsoft-teams/) - Plataforma de comunicación

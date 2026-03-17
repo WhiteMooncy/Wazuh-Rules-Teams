@@ -5,49 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2026-03-16
+---
 
-### Added
+## Installation & Deployment Status
 
-#### Rules
-- **89 Custom Windows Security Rules** (`custom_windows_security_rules.xml`)
-  - Kerberos authentication rules (200001-200010)
-  - Privilege escalation rules (200021-200040)
-  - Malware/PUA detection rules (200041-200070)
-  - Network detection rules (200071-200090)
-  - File system integrity rules (200091-200100)
+**Current Production Version:** 4.1 (Simple, Real-time Alert Processing)
+- **Location:** `/root/wazuh-teams/custom-teams.py` (on 10.27.20.171)
+- **Status:** Operational and tested in production
+- **Implementation:** Individual alert processing with immediate Teams delivery
 
-- **5 Override Rules** (`custom_windows_overrides.xml`)
-  - Rule 60103: Increased severity from level 0 to level 8
-  - Rules 100070-100072: Password change variants
-  - Rule 100101: Event log clearing raised to level 15 (critical)
-  - Rule 100103: PAM authentication (level 3)
+**Proposed Versions Under Development:**
+- Advanced features with alert accumulation, caching, and retry logic
+- Additional rule sets (not yet deployed)
+
+---
+
+## [4.1.0] - 2026-03-09
+
+### Current - PRODUCTION
 
 #### Integration
 - **Teams Integration Script** (`custom-teams-summary.py`)
-  - Alert accumulation system with configurable thresholds
-  - Summary mode: accumulates alerts and sends periodic summaries
-  - Immediate mode: critical alerts (level ≥15) bypass accumulation
-  - Persistent cache using pickle for state preservation across restarts
-  - Adaptive Cards formatting for Teams messages
-  - SSL verification disabled for internal Power Automate webhooks
-  - Configurable thresholds: MAX_ALERTS_BEFORE_SUMMARY (3), SUMMARY_INTERVAL_HOURS (24)
-
+  - Real-time alert processing: Each alert sends immediately
+  - Adaptive Cards formatting with color-coded severity
+  - Dynamic Dashboard links pointing to `https://192.168.30.2`
+  - VirusTotal integration when available in alert data
+  - Structured logging to `/var/ossec/logs/integrations.log`
+  - SSL verification enabled for security
+  - Simple timeout-based reliability (30s per request)
+  
 #### Testing Scripts
-- **Quick Test Script** (`scripts/test_alerts.sh`)
-  - Tests 17 representative rules in 8 phases
-  - Validates Kerberos, Services, Processes, LSASS, Accounts, Passwords, Critical events, PAM
-  - Execution time: ~30 seconds
-  - Expected result: 2 immediate alerts + 1 summary
-
-- **Comprehensive Test Script** (`scripts/test_all_rules.sh`)
-  - Tests all 101 custom rules in 10 phases
-  - Complete validation of entire ruleset (Windows 89 + Overrides 5 + Linux 7)
-  - Execution time: ~5 minutes
-  - Expected result: 2 immediate alerts + multiple summaries
+- Basic integration validation
+- Manual alert testing procedures
 
 #### Documentation
-- **Installation Guide** (`docs/INSTALLATION.md`)
+- Simple installation guide
+- Webhook configuration instructions
+- Basic troubleshooting guide
+
+---
+
+## [4.0.0] - Proposed (Under Development)
+
+**NOTE:** The following features are documented but NOT YET DEPLOYED to production
+
+### Proposed Additions (Not Active)
+
+#### Advanced Features (Experimental)
+- ❌ Alert accumulation system (planned: 3 alerts or 24h intervals)
+- ❌ Persistent cache using pickle (planned)
+- ❌ Adaptive retry logic with exponential backoff (planned)
+- ❌ Intelligent summary mode with statistics (planned)
+- ❌ Critical alert bypass mechanism (planned: level ≥15)
+
+#### Custom Rules (Not Deployed)
+- 89 Windows Security Rules (planned deployment)
+- 5 Override/Correlation Rules (planned deployment)
+- 7 Linux Security Rules (planned deployment)
+- Total: 101 custom rules (planned, not active)
+
+#### Enhanced Documentation (Proposed)
+- Comprehensive troubleshooting guide
+- Complete rules reference
+- Advanced Teams setup procedures
+
+---
+
+## Previous Versions
+
+### Archive Notes
+- Earlier versions existed but details are not currently maintained
+- Current focus is on the stable, simple v4.1 implementation
+- Planned improvements documented for future reference
   - Complete step-by-step installation from scratch
   - Quick installation (5 commands)
   - Power Automate webhook setup

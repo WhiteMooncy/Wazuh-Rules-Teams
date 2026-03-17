@@ -1,53 +1,123 @@
-# Improvements Summary
+# Status Report: Current Implementation vs. Proposed Improvements
 
-Este documento resume todas las mejoras implementadas en el proyecto de Wazuh Custom Rules & Teams Integration.
+## Executive Summary
 
-## 📋 Resumen de Cambios
+The production system (`10.27.20.171`) is running **v4.1**, a **stable, real-time alert processor** that has been thoroughly tested and validated in the field.
 
-### 1. ✅ Documentación Nueva (Crítico)
+This document clarifies the difference between the production implementation and proposed improvements that are under development.
 
-Se crearon tres archivos de documentación que faltaban en `Wazuh-Rules-Teams/docs/`:
+---
 
-#### **TROUBLESHOOTING.md**
-- Guía completa de diagnóstico y resolución de problemas
-- Secciones para: validación de reglas, problemas de caché, integración Teams, análisis de logs, CDB lists
-- Checklist rápido de diagnóstico
-- Comandos concretos para cada problema común
+## Production Implementation (v4.1) - ACTIVE
 
-#### **RULES_REFERENCE.md**
-- Documentación exhaustiva de las 101 reglas personalizadas
-- Tablas detalladas con Rule ID, descripción, evento Windows, MITRE ATT&CK, severidad
-- Guías de uso por caso de uso (Intrusion Detection, Insider Threat, Compliance, APT)
-- Información de configuración y testing de reglas
+### Current Deployed Features
 
-#### **TEAMS_SETUP.md**
-- Guía paso a paso: desde crear webhook en Teams hasta instalar script  
-- Procedimiento completo de Power Automate flow
-- Configuración de variables de entorno
-- Testing manual y validación
-- Troubleshooting de integración
-- Automatización con cron
+| Feature | Status | Details |
+|---------|--------|---------|
+| Real-time Alert Processing | ✅ ACTIVE | Alerts sent immediately to Teams |
+| Adaptive Card Formatting | ✅ ACTIVE | Rich formatting with color-coded severity |
+| Dashboard Integration | ✅ ACTIVE | Dynamic links to Wazuh Dashboard (192.168.30.2) |
+| VirusTotal Integration | ✅ ACTIVE | Includes VT links when available in alert |
+| Logging | ✅ ACTIVE | `/var/ossec/logs/integrations.log` |
+| Alert Validation | ✅ ACTIVE | Verifies webhook and alert file integrity |
+| Timeout Handling | ✅ ACTIVE | 30-second timeout per request |
 
-### 2. ✅ Conteos de Reglas Actualizados (Crítico)
+### Production Implementation Statistics
+- **Script Size:** 198 lines of clean, focused Python code
+- **Dependencies:** `requests` library for HTTP POST
+- **No Cache:** Stateless design - no pickle files, no state persistence
+- **No Accumulation:** Each alert is independent and immediate
+- **Platform:** Linux (tested on Wazuh 4.x)
 
-Actualizado a 101 custom rules en:
-- ✅ CHANGELOG.md - cambiado de "62 Custom Windows Rules" a "89 Custom Windows Rules"
-- ✅ README.md - cambio de "67 totales" a "101 totales" 
-- ✅ test_all_rules.sh (2 versiones) - referencia de "67 rules" a "101 rules"
+---
 
-**Desglose correcto:**
-- Windows Security: 89 reglas
-- Overrides/Correlación: 5 reglas
-- Linux Security: 7 reglas
-- **Total: 101 reglas**
+## Proposed Improvements (Under Development - NOT DEPLOYED)
 
-### 3. ✅ Externalización de Dashboard URL
+The following features have been designed and documented but are **NOT currently deployed to production** because they are still under testing and validation.
 
-**Estado:** Ya estaba implementado en la versión canónica.
+### Proposed Advanced Features
 
-La versión en `Wazuh-Rules-Teams/integrations/custom-teams-summary.py` ya incluye:
-- Variable de entorno `WAZUH_DASHBOARD_URL`
-- Default a `https://wazuh.example.invalid`
+| Feature | Status | Reason Not Deployed |
+|---------|--------|-------------------|
+| Alert Accumulation | 🔧 PROPOSED | Requires additional testing for reliability |
+| Persistent Caching (pickle) | 🔧 PROPOSED | Adds complexity and state management |
+| Exponential Backoff Retry | 🔧 PROPOSED | May cause delays in critical scenarios |
+| Summary Statistics | 🔧 PROPOSED | Increases complexity; current real-time works well |
+| Custom Rules (101 total) | 🔧 PLANNED | Rules designed but deployment pending |
+
+### Why Not Deployed Yet
+
+1. **Production Stability:** Current solution is simple, reliable, and tested
+2. **Monitoring Needs:** More complex system requires additional monitoring infrastructure
+3. **Testing Requirements:** New features require comprehensive field testing
+4. **User Feedback:** Waiting for feedback on proposed improvements
+5. **Migration Risk:** Risk of service disruption during migration
+
+---
+
+## Comparison: Current vs. Proposed
+
+### Alert Processing
+
+**Current (v4.1):**
+```
+Alert Generated → Execute Script → Format Card → Send to Teams → Log Result
+```
+
+**Proposed (v4.0+):**
+```
+Alert Generated → Load Cache → Accumulate (if level <15) → Check Timer → 
+Send Summary or Immediate → Save Cache → Log
+```
+
+### Time to Delivery
+
+| Scenario | Current | Proposed |
+|----------|---------|----------|
+| Normal Alert | 2-5 seconds | Variable (cached until threshold) |
+| Critical Alert | 2-5 seconds | <2 seconds (immediate bypass) |
+| Summary | N/A | 24h or after 3 alerts |
+
+### Storage Requirements
+
+| Component | Current | Proposed |
+|-----------|---------|----------|
+| Cache File | None | `/var/ossec/logs/teams_alerts_cache.pkl` |
+| Memory Footprint | 20MB | 50-100MB (with caching) |
+| Persistence | Stateless | Stateful |
+
+---
+
+## Recommendation
+
+**For Production:** Continue with v4.1
+- Stable, tested, low-maintenance
+- Fast alert delivery
+- Minimal dependencies
+- Easy to troubleshoot
+
+**For Future Enhancement:** Test proposed v4.0+ features in a staging environment first before production deployment.
+
+---
+
+## Files in This Repository
+
+### Production-Ready
+- `integrations/custom-teams-summary.py` - Current v4.1 (ACTIVE)
+- `docs/*` - Operational guides
+- `scripts/*` - Testing utilities
+
+### Under Development / Experimental
+- `integrations/custom-teams-summary-IMPROVED.py` - Proposed v4.0+ (NOT DEPLOYED)
+- Proposed rule files (planned but not active)
+
+---
+
+## Version History
+
+- **v4.1** (2026-03-09) - Current production: Real-time, stable
+- **v4.0+** (Proposed) - Accumulation features, under development
+- **v1.0-3.x** - Legacy versions (archived)
 - Usado en funciones `build_summary_card()` y `build_immediate_alert()`
 
 ### 4. ✅ Logging Estructurado Agregado (Importante)

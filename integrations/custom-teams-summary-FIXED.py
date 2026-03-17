@@ -1,8 +1,14 @@
 #!/var/ossec/framework/python/bin/python3
 """
-Wazuh Teams Integration - Resumen Diario (MEJORADO)
+Wazuh Teams Integration - Resumen Diario (MEJORADO v2)
 Acumula alertas y envía resumen cada 24h o al alcanzar el límite
-MEJORA: Soporte mejorado para alertas de correlación (brute force)
+MEJORAS:
+  - Retry con backoff exponencial
+  - Validación de campos requeridos
+  - Variables de entorno para configuración
+  - Logging estructurado
+  - Lock file para thread-safety
+  - Deduplicación de alertas
 """
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -14,35 +20,171 @@ import urllib.error
 import os
 from datetime import datetime, timedelta
 import pickle
+import logging
+import fcntl
+import time
 
-# Configuración
-CACHE_FILE = "/var/ossec/logs/teams_alerts_cache.pkl"
-SUMMARY_INTERVAL_HOURS = 24  # Enviar resumen cada 24h
-MAX_ALERTS_BEFORE_SUMMARY = 3  # O cuando se acumulen 3 alertas
-CRITICAL_LEVEL = 15  # Alertas >=15 se envían inmediatamente
+# Configuración (desde variables de entorno o defaults)
+CACHE_FILE = os.getenv('WAZUH_TEAMS_CACHE_FILE', "/var/ossec/logs/teams_alerts_cache.pkl")
+LOG_FILE = os.getenv('WAZUH_TEAMS_LOG_FILE', "/var/ossec/logs/integrations.log")
+SUMMARY_INTERVAL_HOURS = int(os.getenv('WAZUH_TEAMS_SUMMARY_HOURS', 24))
+MAX_ALERTS_BEFORE_SUMMARY = int(os.getenv('WAZUH_TEAMS_MAX_ALERTS', 3))
+CRITICAL_LEVEL = int(os.getenv('WAZUH_TEAMS_CRITICAL_LEVEL', 15))
+MAX_RETRY_ATTEMPTS = int(os.getenv('WAZUH_TEAMS_MAX_RETRIES', 3))
+RETRY_BACKOFF_INITIAL = float(os.getenv('WAZUH_TEAMS_RETRY_BACKOFF', 2))
+CACHE_MAX_AGE_HOURS = int(os.getenv('WAZUH_TEAMS_CACHE_AGE', 48))
+LOCK_FILE = CACHE_FILE + ".lock"
 
-def load_cache():
-    """Cargar caché de alertas acumuladas"""
-    if os.path.exists(CACHE_FILE):
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger('wazuh-teams-integration')
+
+def acquire_lock():
+    """Adquirir lock file para thread-safety"""
+    try:
+        lock_file = open(LOCK_FILE, 'w')
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return lock_file
+    except IOError:
+        return None
+
+def release_lock(lock_file):
+    """Liberar lock file"""
+    if lock_file:
         try:
-            with open(CACHE_FILE, 'rb') as f:
-                return pickle.load(f)
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            lock_file.close()
         except:
             pass
-    return {
+
+def load_cache():
+    """Cargar caché de alertas acumuladas (con lock)"""
+    cache = {
         'alerts': [],
         'last_summary_time': datetime.now() - timedelta(days=1),
         'summary_count': 0
     }
+    
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, 'rb') as f:
+                data = pickle.load(f)
+                if isinstance(data, dict):
+                    cache = data
+                    logger.debug(f"Cache loaded with {len(cache.get('alerts', []))} alerts")
+        except Exception as e:
+            logger.warning(f"Failed to load cache: {e}. Starting fresh.")
+    
+    return cache
 
 def save_cache(cache):
-    """Guardar caché"""
+    """Guardar caché (con lock y expiración)"""
+    lock_file = acquire_lock()
+    if not lock_file:
+        logger.error("Could not acquire lock file for cache write")
+        return False
+    
     try:
+        # Eliminar alertas muy antiguas (>CACHE_MAX_AGE_HOURS)
+        cutoff_time = datetime.now() - timedelta(hours=CACHE_MAX_AGE_HOURS)
+        original_count = len(cache.get('alerts', []))
+        cache['alerts'] = [
+            a for a in cache.get('alerts', [])
+            if datetime.fromisoformat(a.get('timestamp', '')) > cutoff_time
+        ]
+        
+        if len(cache['alerts']) < original_count:
+            logger.info(f"Removed {original_count - len(cache['alerts'])} expired alerts from cache")
+        
         with open(CACHE_FILE, 'wb') as f:
             pickle.dump(cache, f)
         os.chmod(CACHE_FILE, 0o660)
+        logger.debug(f"Cache saved with {len(cache['alerts'])} alerts")
+        return True
     except Exception as e:
-        sys.stderr.write(f"Error saving cache: {e}\n")
+        logger.error(f"Error saving cache: {e}")
+        return False
+    finally:
+        release_lock(lock_file)
+
+def validate_alert(alert):
+    """Validar que la alerta tenga todos los campos requeridos"""
+    required_fields = [
+        ('rule.id', lambda a: a.get('rule', {}).get('id')),
+        ('rule.level', lambda a: a.get('rule', {}).get('level')),
+        ('rule.description', lambda a: a.get('rule', {}).get('description')),
+        ('agent.name', lambda a: a.get('agent', {}).get('name')),
+        ('timestamp', lambda a: a.get('timestamp')),
+    ]
+    
+    for field_name, getter in required_fields:
+        try:
+            value = getter(alert)
+            if not value:
+                logger.warning(f"Missing field: {field_name}")
+                return False
+        except Exception as e:
+            logger.warning(f"Error validating {field_name}: {e}")
+            return False
+    
+    return True
+
+def is_duplicate_alert(cache, alert):
+    """Detectar si la alerta ya está en caché (deduplicación)"""
+    alert_id = alert.get('id')
+    if not alert_id:
+        return False
+    
+    for existing in cache.get('alerts', []):
+        if existing.get('id') == alert_id:
+            logger.info(f"Duplicate alert detected: {alert_id}")
+            return True
+    
+    return False
+
+def send_with_retry(webhook_url, message, max_attempts=None):
+    """Enviar a Teams con retry y backoff exponencial"""
+    if max_attempts is None:
+        max_attempts = MAX_RETRY_ATTEMPTS
+    
+    for attempt in range(1, max_attempts + 1):
+        try:
+            data = json.dumps(message).encode('utf-8')
+            headers = {'Content-Type': 'application/json'}
+            
+            request = urllib.request.Request(webhook_url, data=data, headers=headers)
+            response = urllib.request.urlopen(request, timeout=30)
+            
+            if response.status in (200, 202):
+                logger.info(f"Alert sent successfully (attempt {attempt})")
+                return True
+        except urllib.error.HTTPError as e:
+            logger.warning(f"HTTP Error {e.code} (attempt {attempt}/{max_attempts}): {e.reason}")
+            if attempt < max_attempts:
+                wait_time = RETRY_BACKOFF_INITIAL * (2 ** (attempt - 1))
+                logger.info(f"Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+        except urllib.error.URLError as e:
+            logger.warning(f"Network error (attempt {attempt}/{max_attempts}): {e.reason}")
+            if attempt < max_attempts:
+                wait_time = RETRY_BACKOFF_INITIAL * (2 ** (attempt - 1))
+                logger.info(f"Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+        except Exception as e:
+            logger.error(f"Unexpected error (attempt {attempt}/{max_attempts}): {e}")
+            if attempt < max_attempts:
+                wait_time = RETRY_BACKOFF_INITIAL * (2 ** (attempt - 1))
+                time.sleep(wait_time)
+    
+    logger.error(f"Failed to send after {max_attempts} attempts")
+    return False
 
 def should_send_summary(cache):
     """Determinar si es momento de enviar resumen"""
@@ -435,35 +577,27 @@ def build_immediate_alert(alert_json, webhook_url):
     return message
 
 def send_to_teams(message, webhook_url):
-    """Enviar mensaje a Teams"""
-    try:
-        data = json.dumps(message).encode('utf-8')
-        headers = {'Content-Type': 'application/json'}
-        
-        request = urllib.request.Request(webhook_url, data=data, headers=headers)
-        response = urllib.request.urlopen(request)
-        
-        return response.status == 200 or response.status == 202
-    except urllib.error.HTTPError as e:
-        sys.stderr.write(f"HTTP Error {e.code}: {e.reason}\n")
-        return False
-    except Exception as e:
-        sys.stderr.write(f"Error sending to Teams: {e}\n")
-        return False
+    """Enviar mensaje a Teams con retry automático"""
+    return send_with_retry(webhook_url, message)
 
 def main():
     # Leer alerta desde stdin
     try:
         alert_json = json.loads(sys.stdin.read())
     except json.JSONDecodeError as e:
-        sys.stderr.write(f"Error parsing JSON alert: {e}\n")
+        logger.error(f"Error parsing JSON alert: {e}")
+        sys.exit(1)
+    
+    # Validar alerta
+    if not validate_alert(alert_json):
+        logger.error("Alert validation failed - missing required fields")
         sys.exit(1)
     
     # Leer webhook de argumentos
     webhook_url = sys.argv[1] if len(sys.argv) > 1 else ""
     
     if not webhook_url:
-        sys.stderr.write("Error: No webhook URL provided\n")
+        logger.error("No webhook URL provided")
         sys.exit(1)
     
     # Cargar caché
@@ -476,27 +610,33 @@ def main():
     if level >= CRITICAL_LEVEL:
         message = build_immediate_alert(alert_json, webhook_url)
         if send_to_teams(message, webhook_url):
-            sys.stdout.write(f"[OK] Critical alert sent immediately (Rule {alert_json['rule']['id']}, Level {level})\n")
+            logger.info(f"Critical alert sent immediately (Rule {alert_json['rule']['id']}, Level {level})")
         else:
-            sys.stderr.write(f"[ERROR] Failed to send critical alert (Rule {alert_json['rule']['id']})\n")
+            logger.error(f"Failed to send critical alert (Rule {alert_json['rule']['id']})")
         save_cache(cache)  # Guardar caché sin cambios
         sys.exit(0)
     
-    # Alertas 11-14: acumular
+    # Alertas 11-14: acumular con deduplicación
+    if is_duplicate_alert(cache, alert_json):
+        logger.info(f"Skipping duplicate alert {alert_json.get('id', 'unknown')}")
+        save_cache(cache)
+        sys.exit(0)
+    
     cache['alerts'].append(alert_json)
+    logger.info(f"Alert accumulated (Rule {alert_json['rule']['id']}, Level {level})")
     
     # Enviar si se alcanzó el límite de acumulación
     if should_send_summary(cache):
         message = build_summary_card(cache, webhook_url)
         if send_to_teams(message, webhook_url):
-            sys.stdout.write(f"[OK] Summary sent: {len(cache['alerts'])} alerts\n")
+            logger.info(f"Summary sent: {len(cache['alerts'])} alerts")
             cache['alerts'] = []
             cache['last_summary_time'] = datetime.now()
             cache['summary_count'] += 1
         else:
-            sys.stderr.write(f"[ERROR] Failed to send summary with {len(cache['alerts'])} alerts\n")
+            logger.error(f"Failed to send summary with {len(cache['alerts'])} alerts")
     else:
-        sys.stdout.write(f"[INFO] Alert accumulated ({len(cache['alerts'])}/{MAX_ALERTS_BEFORE_SUMMARY}). Not sending yet.\n")
+        logger.info(f"Alert accumulated ({len(cache['alerts'])}/{MAX_ALERTS_BEFORE_SUMMARY}). Not sending yet.")
     
     # Guardar caché
     save_cache(cache)
