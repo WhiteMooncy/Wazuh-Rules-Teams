@@ -1,19 +1,26 @@
-# Wazuh Custom Rules (LEGACY DOCUMENTATION)
+# Wazuh Custom Rules
 
-⚠️ **NOTE:** This directory contains an incomplete version of the custom rules. 
+⚠️ **STATUS:** This directory contains the current active set of custom rules for deployment.
 
-## Current Version Location
+## Current Implementation
 
-For the **complete and up-to-date** set of 101 custom rules (89 Windows + 5 Overrides + 7 Linux), please refer to:
-- 📂 **`/Wazuh-Rules-Teams/rules/`** - Complete rule set with full documentation
-
-## This Directory
-
-This directory contains legacy rule files:
-- **custom_windows_security_rules.xml**: 62 Windows Security rules (partial set)
+This directory contains:
+- **custom_windows_security_rules.xml**: 62 Windows Security rules
 - **local_rules_override.xml**: 5 override rules
+- **Total:** 67 rules currently documented and active
 
-**RECOMMENDATION:** Use the canonical rules from `/Wazuh-Rules-Teams/rules/` for production deployments.
+**Note:** Documentation references planned expansion to 101 rules (including 7 Linux rules), but the current active deployment uses these 67 rules.
+
+## Deployment Status
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Windows Rules (62) | ✅ Current | `custom_windows_security_rules.xml` |
+| Override Rules (5) | ✅ Current | `local_rules_override.xml` |
+| Linux Rules | 📋 Planned | Not yet implemented |
+| Complete Set (101) | 📋 Planned | Under development |
+
+**For production deployments:** Use the files in this directory.
 
 ## Legacy Files
 

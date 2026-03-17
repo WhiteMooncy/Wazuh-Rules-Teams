@@ -8,31 +8,40 @@
 
 ## Estado del Proyecto
 
-**Versión en Producción:** Script de integración Teams simple y funcional
+**Versión en Producción:** Script de integración Teams simple y funcional (v4.1)
 - **Ubicación Remota:** `/root/wazuh-teams/custom-teams.py` (en máquina 10.27.20.171)
-- **Estado:** Operativo y probado en ambiente productivo
-- **Procesamiento:** Real-time, alerta por alerta
-- **Nota:** Este repositorio contiene versiones mejoradas del script base no aún desplegadas
+- **Estado:** ✅ Operativo y probado en ambiente productivo
+- **Procesamiento:** Real-time, alerta por alerta (sin acumulación)
+- **Nota:** Este repositorio contiene versiones mejoradas del script base. Ver IMPROVEMENTS.md para detalles.
+
+**Para entender la diferencia entre v4.1 (actual) y versiones propuestas:** Consulta [IMPROVEMENTS.md](IMPROVEMENTS.md)
 
 ## 📋 Descripción
 
 La integración actual proporciona:
-- **Script de integración Microsoft Teams** funcional y estable
-- **Procesamiento individual de alertas** con envío inmediato
+- **Script de integración Microsoft Teams** funcional y estable (v4.1)
+- **Procesamiento individual de alertas** con envío inmediato (real-time)
 - **Tarjetas Adaptive Card** con formato enriquecido
 - **Links dinámicos al Dashboard Wazuh** para cada alerta
 - **Validación de integridad** de alertas y webhooks
 
+⚠️ **IMPORTANTE:** Este repositorio contiene DOS versiones:
+1. **v4.1 (PRODUCCIÓN)**: Script simple, probado en 10.27.20.171 ✅ Usar esto
+2. **FIXED/Experimental**: Versión mejorada bajo testing ⏳ No usar en producción aún
+
+Ver [IMPROVEMENTS.md](IMPROVEMENTS.md) para comparación detallada.
+
 ## 🎯 Características Implementadas
 
-### ✅ Integración Teams (Versión Actual)
+### ✅ Integración Teams (Versión Actual v4.1) - EN PRODUCCIÓN
 
-- **Procesamiento Real-time**: Cada alerta se envía inmediatamente a Teams
+- **Procesamiento Real-time**: Cada alerta se envía inmediatamente a Teams (2-5 segundos típico)
 - **Adaptive Cards**: Tarjetas formateadas con niveles de severidad
 - **Dashboard Integration**: Enlaces directos al Wazuh Dashboard (192.168.30.2)
 - **VirusTotal Integration**: Incluye links si están disponibles en los datos
 - **Logging**: Registro a `/var/ossec/logs/integrations.log`
 - **Validación**: Verifica webhook URL y formato de alertas
+- **Sin Cache**: Diseño stateless, sin complejidades de persistencia
 
 ### 📝 Campos en Cada Alerta
 
@@ -47,14 +56,19 @@ La integración actual proporciona:
 
 ## 📊 Implementación
 
-| Aspecto | Estado |
-|--------|--------|
-| Procesamiento | Real-time individual |
-| Caché | Ninguno (sin acumulación) |
-| Retry logic | Básico (timeout 30s) |
-| Logging | Sí, archivo + stdout |
-| Dashboard | Sí, links dinámicos |
-| VirusTotal | Sí, si disponible |
+| Aspecto | Estado Actual (v4.1) | Propuesto (Bajo desarrollo) |
+|--------|--------|---------|
+| Procesamiento | ✅ Real-time individual | ⏳ Acumulación por N alertas |
+| Caché | ✅ Ninguno (stateless) | ⏳ Pickle persistence |
+| Retry logic | ✅ Básico (timeout 30s) | ⏳ Exponential backoff |
+| Logging | ✅ Sí, archivo + stdout | ✅ Enhanced structured logging |
+| Dashboard | ✅ Sí, links dinámicos | ✅ Sí, links dinámicos |
+| VirusTotal | ✅ Sí, si disponible | ✅ Sí, si disponible |
+| Resumen automático | ❌ No | ⏳ Sí (24h o N alertas) |
+| Thread-safety | ✅ No necesario (stateless) | ⏳ File-based locking |
+
+**Producción recomendada:** v4.1 (actual) - Simple, confiable, probado en ambiente real.
+**Experimental:** Versión FIXED - Esperar a validación completa antes de desplegar.
 
 ## 🚀 Instalación Rápida
 

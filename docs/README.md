@@ -1,28 +1,28 @@
 # Documentation
 
-This folder is a legacy or reduced documentation set kept at repository root.
-
-## What To Use
-
-If you need the current operational documentation, use `../Wazuh-Rules-Teams/docs/`.
+This directory contains operational documentation and guides for Wazuh custom rules and Teams integration.
 
 ## Quick Links
 
-| Path | Purpose | Status |
+| Document | Purpose | Status |
 | ---- | ------- | ------ |
-| [INSTALLATION.md](INSTALLATION.md) | Root-level installation guide | Legacy/minimal |
-| [MIGRATION.md](MIGRATION.md) | Root-level migration guide | Legacy/minimal |
-| [../Wazuh-Rules-Teams/docs/README.md](../Wazuh-Rules-Teams/docs/README.md) | Canonical documentation index | Current |
-| [../Wazuh-Rules-Teams/docs/INSTALLATION.md](../Wazuh-Rules-Teams/docs/INSTALLATION.md) | Canonical installation guide | Current |
-| [../Wazuh-Rules-Teams/docs/MIGRATION.md](../Wazuh-Rules-Teams/docs/MIGRATION.md) | Canonical migration guide | Current |
-| [../Wazuh-Rules-Teams/docs/CAMBIOS_FACTORIZACION_REGLAS.md](../Wazuh-Rules-Teams/docs/CAMBIOS_FACTORIZACION_REGLAS.md) | Factorization and rule changes | Current |
-| [../Wazuh-Rules-Teams/docs/BRUTE_FORCE_DETECTION_FIXES.md](../Wazuh-Rules-Teams/docs/BRUTE_FORCE_DETECTION_FIXES.md) | SSH brute force detection fixes | Current |
-| [../STRUCTURE.md](../STRUCTURE.md) | Repository map | Current |
+| [INSTALLATION.md](INSTALLATION.md) | Complete installation guide | Current ✅ |
+| [MIGRATION.md](MIGRATION.md) | Server-to-server migration procedures | Current ✅ |
+| [INSTRUCCIONES_IMPLEMENTACION_FIX.md](INSTRUCCIONES_IMPLEMENTACION_FIX.md) | Implementation of FIXED version (Spanish) | Testing ⏳ |
+| [WAZUH_TEAMS_EXPLICACION_COMPLETA.md](WAZUH_TEAMS_EXPLICACION_COMPLETA.md) | Complete explanation of Wazuh+Teams flow (Spanish) | Reference 📖 |
 
 ## Recommended Reading Order
 
-1. Open [../STRUCTURE.md](../STRUCTURE.md) to understand the repository layout.
-2. Start from [../Wazuh-Rules-Teams/README.md](../Wazuh-Rules-Teams/README.md).
-3. Use [../Wazuh-Rules-Teams/docs/README.md](../Wazuh-Rules-Teams/docs/README.md) as the active documentation index.
-4. Use this folder only if you need the older root-level references.
+1. **First visit:** Start with [../README.md](../README.md) for project overview
+2. **For v4.1 production deployment:** Use [INSTALLATION.md](INSTALLATION.md)
+3. **For server migration:** Use [MIGRATION.md](MIGRATION.md)
+4. **For understanding the system:** Read [WAZUH_TEAMS_EXPLICACION_COMPLETA.md](WAZUH_TEAMS_EXPLICACION_COMPLETA.md)
+5. **For v4.1 troubleshooting:** See [../integrations/README.md](../integrations/README.md#monitoring--testing)
+6. **For FIXED version testing:** See [INSTRUCCIONES_IMPLEMENTACION_FIX.md](INSTRUCCIONES_IMPLEMENTACION_FIX.md)
+
+## Important Notes
+
+- **Current Production Version:** v4.1 - Use INSTALLATION.md
+- **Experimental/Testing:** FIXED version - See INSTRUCCIONES_IMPLEMENTACION_FIX.md (Spanish only)
+- **For rules reference:** See [../rules/README.md](../rules/README.md)
 

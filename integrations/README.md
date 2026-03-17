@@ -1,56 +1,65 @@
 # Wazuh Teams Integration
 
-This directory contains the Microsoft Teams integration scripts for Wazuh alert notifications with summary accumulation.
+This directory contains the Microsoft Teams integration scripts for Wazuh SIEM alert notifications.
+
+## Status: PRODUCTION vs. PROPOSED
+
+⚠️ **IMPORTANT:** This directory contains both production-ready and experimental/proposed code.
+
+| Script | Status | Features | Deployment |
+|--------|--------|----------|------------|
+| `custom-teams-summary.py` | ✅ PRODUCTION (v4.1) | Real-time alerts, simple reliable | ACTIVE at 10.27.20.171 |
+| `custom-teams-summary-FIXED.py` | 🔧 EXPERIMENTAL | Enhanced features, caching, retry | Under testing |
+
+For details on the difference between versions, see [IMPROVEMENTS.md](../IMPROVEMENTS.md)
 
 ## Files
 
-### custom-teams-summary.py
-Main integration script with intelligent alert accumulation (29KB).
+### custom-teams-summary.py (PRODUCTION)
+**Current production script** - Simple, fast, reliable real-time alert processing.
 
-**Features:**
-- **Alert Accumulation**: Groups multiple alerts before sending to reduce noise
-- **Smart Thresholds**: Configurable alert count and time-based triggers
-- **Critical Bypass**: High-severity alerts (level ≥15) sent immediately
-- **Persistent Cache**: Uses pickle for alert storage across restarts
-- **Adaptive Cards**: Rich formatted messages with statistics and details
-- **SSL Verification**: Disabled for internal Power Automate webhooks
-- **Error Handling**: Comprehensive logging and retry logic
+**Current Features:**
+- ✅ **Real-time Processing**: Each alert sends immediately to Teams
+- ✅ **Adaptive Cards**: Rich formatted messages with severity color-coding
+- ✅ **Dashboard Links**: Dynamic links to Wazuh Dashboard (192.168.30.2)
+- ✅ **VirusTotal Integration**: Includes VT links when available in alert data
+- ✅ **Alert Validation**: Verifies webhook URL and alert integrity
+- ✅ **Simple Timeout**: 30-second timeout per request
+- ✅ **Logging**: Records to `/var/ossec/logs/integrations.log`
 
-**Configuration:**
-```python
-MAX_ALERTS_BEFORE_SUMMARY = 3  # Send summary after this many alerts
-SUMMARY_INTERVAL_HOURS = 24     # Or after this many hours
-CRITICAL_LEVEL = 15             # Alerts at this level bypass accumulation
+**Why This Design?**
+- Stateless (no cache complications)
+- Low memory footprint (~20MB)
+- Fast alert delivery (2-5 seconds typical)
+- Easy to troubleshoot and maintain
+- Proven stable in production
+
+### custom-teams-summary-FIXED.py (EXPERIMENTAL)
+**Enhanced version** with advanced features (under testing, NOT production-ready).
+
+**Proposed Features (Not Active):**
+- ⏳ Alert accumulation (cache-based)
+- ⏳ Summary messages after N alerts or X hours
+- ⏳ Retry logic with exponential backoff
+- ⏳ Thread-safe file locking
+- ⏳ Enhanced validation and deduplication
+
+**Status:** Designed and documented but requires additional field testing before production deployment.
+
+**For more information:** See [IMPROVEMENTS.md](../IMPROVEMENTS.md) for detailed comparison and rationale.
+
+## Installation (Production v4.1)
+
+### 1. Copy Integration Script (choose one)
+
+**Option A: Production Script (Recommended)**
+```bash
+sudo cp custom-teams-summary.py /var/ossec/integrations/custom-teams-summary.py
 ```
 
-**Key Functions:**
-- `load_cache()`: Loads persisted alert data from disk
-- `save_cache()`: Saves current alerts to disk
-- `should_send_summary()`: Determines if summary should be sent
-- `build_summary_card()`: Creates Teams Adaptive Card for summary
-- `build_immediate_alert()`: Creates Teams card for critical alerts
-- `send_msg()`: Sends HTTP requests to Power Automate webhook
-
-### custom-teams-direct.py *(optional alternative)*
-Direct alert integration without accumulation - sends every alert immediately.
-
-**Use Case**: High-criticality environments where every alert must be reviewed individually.
-
-### wrapper_custom-teams.sh
-Bash wrapper for Python integration execution.
-
-**Purpose:**
-- Sets proper environment variables
-- Handles Python path resolution
-- Provides error logging
-- Ensures correct working directory
-
-## Installation
-
-### 1. Copy Integration Script
-
+**Option B: Experimental Script (Testing Only)**
 ```bash
-sudo cp custom-teams-summary.py /var/ossec/integrations/
+sudo cp custom-teams-summary-FIXED.py /var/ossec/integrations/custom-teams-summary.py
 ```
 
 ### 2. Set Permissions
@@ -58,12 +67,15 @@ sudo cp custom-teams-summary.py /var/ossec/integrations/
 ```bash
 sudo chown root:wazuh /var/ossec/integrations/custom-teams-summary.py
 sudo chmod 750 /var/ossec/integrations/custom-teams-summary.py
+sudo chmod +x /var/ossec/integrations/custom-teams-summary.py
 ```
 
-### 3. Make Executable
+### 3. Verify Script Syntax
 
 ```bash
-sudo chmod +x /var/ossec/integrations/custom-teams-summary.py
+# Validate Python syntax
+python3 -m py_compile /var/ossec/integrations/custom-teams-summary.py
+echo $?  # Should show 0 (no errors)
 ```
 
 ### 4. Test Script Manually
@@ -89,7 +101,6 @@ Edit `/var/ossec/etc/ossec.conf` and add:
   <hook_url>YOUR_POWER_AUTOMATE_WEBHOOK_URL</hook_url>
   <level>11</level>
   <alert_format>json</alert_format>
-  <options>{"verify_ssl": false}</options>
 </integration>
 ```
 
@@ -97,6 +108,12 @@ Edit `/var/ossec/etc/ossec.conf` and add:
 
 ```bash
 sudo systemctl restart wazuh-manager
+
+# Verify it's running
+sudo systemctl status wazuh-manager
+
+# Check logs
+sudo tail -20 /var/ossec/logs/ossec.log | grep custom-teams
 ```
 
 ## Configuration Options
@@ -110,9 +127,9 @@ Controls which alerts trigger the integration:
 ```
 
 **Recommended Values:**
-- **`level="11"`**: High sensitivity (recommended for summary mode)
+- **`level="11"`**: High sensitivity (recommended, catches most events)
 - **`level="13"`**: Medium sensitivity (fewer alerts)
-- **`level="15"`**: Critical only (very few alerts)
+- **`level="15"`**: Critical only (immediate delivery only)
 
 ### Webhook URL
 
@@ -127,63 +144,69 @@ Format example:
 https://[tenant].environment.api.powerplatform.com/workflows/[workflow-id]/triggers/manual/paths/invoke?api-version=1&sp=/triggers/manual/run&sv=1.0&sig=[signature]
 ```
 
-### Summary Tuning
+### Configuration for Production Script (v4.1)
 
-Edit thresholds in `custom-teams-summary.py`:
+The production script has minimal configuration needed:
 
 ```python
-# Trigger summary after 3 alerts OR 24 hours (whichever comes first)
-MAX_ALERTS_BEFORE_SUMMARY = 3
-SUMMARY_INTERVAL_HOURS = 24
-CRITICAL_LEVEL = 15  # Alerts ≥ this level sent immediately
+# These are hardcoded and work well for most environments
+LOG_FILE = "/var/ossec/logs/integrations.log"
+DASHBOARD_BASE = "https://192.168.30.2"  # Update to your Wazuh Dashboard IP
 ```
 
-**Tuning Guidelines:**
+**Change Dashboard IP if needed:**
+```bash
+sudo nano /var/ossec/integrations/custom-teams-summary.py
+# Edit: DASHBOARD_BASE = "https://YOUR-DASHBOARD-IP"
+```
 
-| Environment | MAX_ALERTS | INTERVAL_HOURS | CRITICAL_LEVEL |
-|-------------|------------|----------------|----------------|
-| Production  | 5          | 6              | 15             |
-| Development | 10         | 24             | 13             |
-| Testing     | 3          | 2              | 11             |
+### Configuration for Experimental Script (FIXED)
+
+This version supports environment variables for tuning (if using FIXED version):
+
+```bash
+# Set these BEFORE restarting wazuh-manager
+export WAZUH_TEAMS_SUMMARY_HOURS=24
+export WAZUH_TEAMS_MAX_ALERTS=3
+export WAZUH_TEAMS_CRITICAL_LEVEL=15
+export WAZUH_TEAMS_CACHE_AGE=48
+```
+
+**Note:** The FIXED version is experimental. Do not use in production without thorough testing.
 
 ## Cache System
 
-The integration uses a persistent cache to store alerts:
+### Production Script (v4.1) - No Cache
+
+The **production script is stateless** and does NOT use cache:
+- ✅ No pickle files
+- ✅ No state persistence
+- ✅ Each alert processed independently
+- ✅ No cache corruption risk
+
+**Default behavior:** Alerts sent immediately in real-time (2-5 seconds typical).
+
+### Experimental Script (FIXED) - Optional Cache
+
+If using the experimental FIXED version, it can optionally use persistent cache:
 
 **Cache Location:** `/var/ossec/logs/teams_alerts_cache.pkl`
 
-**Cache Structure:**
-```python
-{
-    'alerts': [
-        {
-            'timestamp': '2025-03-11T10:30:00',
-            'agent_name': 'Windows-Server',
-            'rule_id': '100001',
-            'rule_description': 'Kerberos TGT Request',
-            'rule_level': 12
-        },
-        # ... more alerts
-    ],
-    'last_summary_time': '2025-03-11T09:00:00',
-    'summary_count': 15
-}
-```
+**When cache is used:**
+- Alerts are accumulated and grouped
+- Summary sent after N alerts or X hours
+- Cache survives Wazuh restarts
 
-### Cache Management
+**Cache Management (FIXED version only):**
 
-**View cache contents:**
 ```bash
+# View cache contents
 sudo python3 -c "import pickle; print(pickle.load(open('/var/ossec/logs/teams_alerts_cache.pkl','rb')))"
-```
 
-**Clear cache manually:**
-```bash
+# Clear cache manually
 sudo rm /var/ossec/logs/teams_alerts_cache.pkl
-```
 
-**Reset summary counter:**
-```bash
+# Reset summary counter
 sudo python3 << 'EOF'
 import pickle
 import os
@@ -196,45 +219,72 @@ if os.path.exists(cache_file):
 EOF
 ```
 
-## Monitoring
+⚠️ **Note:** Cache features are only available in FIXED version, which is still experimental.
+
+## Monitoring & Testing
 
 ### Check Integration Logs
 
 ```bash
+# Real-time log monitoring
 sudo tail -f /var/ossec/logs/integrations.log | grep custom-teams
+
+# Or check recent history
+sudo grep "custom-teams" /var/ossec/logs/integrations.log | tail -20
 ```
 
 ### Verify Alerts Being Processed
 
 ```bash
+# Check Wazuh manager logs for integration execution
 sudo grep "custom-teams-summary" /var/ossec/logs/ossec.log
+
+# Check for any errors
+sudo grep -i "error\|failed" /var/ossec/logs/integrations.log
 ```
 
-### Test Summary Send
+### Test the Integration (Production v4.1)
 
 ```bash
-# Add exactly MAX_ALERTS_BEFORE_SUMMARY test alerts
-for i in {1..3}; do
-  echo '{"timestamp":"2025-03-11T10:00:00","agent":{"name":"Test"},"rule":{"id":"100001","level":12,"description":"Test Alert"}}' | \
-  sudo /var/ossec/integrations/custom-teams-summary.py "YOUR_WEBHOOK" 11 "custom-teams-summary"
-done
+# Test with a sample alert file
+# First, get a real alert structure from your logs:
+ALERT_FILE=$(sudo ls -t /var/ossec/logs/alerts/ | head -1)
+
+# Or manually create a test alert:
+cat > /tmp/test-alert.json << 'EOF'
+{
+  "timestamp": "2026-03-17T10:00:00",
+  "rule": {
+    "id": "100001",
+    "level": 12,
+    "description": "Test Alert"
+  },
+  "agent": {
+    "name": "TEST-AGENT",
+    "ip": "192.168.1.100"
+  }
+}
+EOF
+
+# Test the script
+echo '${ALERT_FILE}' | sudo /var/ossec/integrations/custom-teams-summary.py "YOUR_WEBHOOK" 11 "custom-teams-summary"
 ```
 
-### Expected Output
+### Expected Results
 
-**On alert accumulation:**
-```
-[INFO] Alert accumulated (2/3). Not sending yet.
-```
+**Success:** Alert appears in Teams within 2-5 seconds
 
-**On summary send:**
-```
-[OK] Summary sent: 5 alerts accumulated
+**Check for errors in logs:**
+```bash
+sudo tail -50 /var/ossec/logs/integrations.log
 ```
 
-**On critical alert:**
+Successful output should show:
 ```
-[CRITICAL] Immediate alert sent (level 15)
+[INFO] custom-teams-summary: Alert received
+[INFO] custom-teams-summary: Alert formatting...
+[INFO] custom-teams-summary: Sending to Teams
+[OK] Alert sent successfully
 ```
 
 ## Troubleshooting
